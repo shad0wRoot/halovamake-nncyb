@@ -5,24 +5,94 @@
 // SPDX-License-Identifier: LicenseRef-SSPL-1.0
 
 import { createRouter, createWebHistory } from 'vue-router'
-import HomeView from '../views/HomeView.vue'
+import DashboardLayout from '../components/ui/dashboard/Layout.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
     {
-      path: '/',
-      name: 'home',
-      component: HomeView,
+      path: '/login',
+      name: 'login',
+      component: () => import('../components/ui/login/index.vue'),
+      meta: { auth: false },
     },
     {
-      path: '/about',
-      name: 'about',
-      // route level code-splitting
-      // this generates a separate chunk (About.[hash].js) for this route
-      // which is lazy-loaded when the route is visited.
-      component: () => import('../views/AboutView.vue'),
+      path: '/register',
+      name: 'register',
+      component: () => import('../components/ui/signup/index.vue'),
+      meta: { auth: false },
     },
+    {
+      path: '/signup',
+      name: 'signup',
+      component: () => import('../components/ui/signup/index.vue'),
+      meta: { auth: false },
+    },
+    {
+      path: '/',
+      component: DashboardLayout,
+      meta: { auth: false },
+      children: [
+        {
+          path: '',
+          redirect: { name: 'dashboard' },
+        },
+        {
+          path: 'dashboard',
+          name: 'dashboard',
+          component: () => import('../components/ui/dashboard/index.vue'),
+          meta: { auth: false },
+        },
+        {
+          path: 'appeals',
+          name: 'appeals',
+          component: () => import('../components/ui/dashboard/AppealsPage.vue'),
+          meta: { auth: false },
+        },
+        {
+          path: 'drafts',
+          name: 'drafts',
+          component: () => import('../components/ui/dashboard/DraftsPage.vue'),
+          meta: { auth: false },
+        },
+        {
+          path: 'create',
+          name: 'create',
+          component: () => import('../components/ui/dashboard/CreatePage.vue'),
+          meta: { auth: false },
+        },
+        {
+          path: 'settings',
+          name: 'settings',
+          component: () => import('../components/ui/dashboard/SettingsPage.vue'),
+          meta: { auth: false },
+        },
+        {
+          path: 'account',
+          name: 'account',
+          component: () => import('../components/ui/dashboard/AccountPage.vue'),
+          meta: { auth: false },
+        },
+        {
+          path: 'notifications',
+          name: 'notifications',
+          component: () => import('../components/ui/dashboard/NotificationsPage.vue'),
+          meta: { auth: false },
+        },
+      ],
+    },
+    {
+      path: '/test',
+      name: 'test',
+      component: () => import('../pages/PageNotFound.vue'),
+      meta: { auth: false },     // requires login — redirects to /login if not authed TODO: set to true when auth is implemented
+    },
+    {
+      path: '/:pathMatch(.*)*',
+      name: 'PageNotFound',
+      component: () => import('@/pages/PageNotFound.vue'),
+      meta: { auth: false },     
+}
   ],
 })
 
