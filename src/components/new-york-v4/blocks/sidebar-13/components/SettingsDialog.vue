@@ -1,8 +1,6 @@
 <!--
-SPDX-FileCopyrightText: 2026 Martin Kralovic
 SPDX-FileCopyrightText: 2026 Martin Královič
 SPDX-FileCopyrightText: 2026 Samuel Juhaniak
-SPDX-FileCopyrightText: 2026 Tadeas Ditte
 SPDX-FileCopyrightText: 2026 Tadeáš Ditte
 
 SPDX-License-Identifier: LicenseRef-SSPL-1.0
@@ -32,15 +30,15 @@ import {
   BreadcrumbList,
   BreadcrumbPage,
   BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb"
-import { Button } from "@/components/ui/button"
+} from '@/components/ui/breadcrumb'
+import { Button } from '@/components/ui/button'
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog"
+} from '@/components/ui/dialog'
 import {
   Sidebar,
   SidebarContent,
@@ -50,7 +48,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarProvider,
-} from "@/components/ui/sidebar"
+} from '@/components/ui/sidebar'
 
 const data = {
   nav: [
@@ -73,6 +71,19 @@ const open = ref(true)
 </script>
 
 <template>
+  <Dialog v-model:open="open">
+    <DialogTrigger as-child>
+      <Button size="sm">
+        Open Dialog
+      </Button>
+    </DialogTrigger>
+    <DialogContent class="overflow-hidden p-0 md:max-h-[500px] md:max-w-[700px] lg:max-w-[800px]">
+      <DialogTitle class="sr-only">
+        Settings
+      </DialogTitle>
+      <DialogDescription class="sr-only">
+        Customize your settings here.
+      </DialogDescription>
       <SidebarProvider class="items-start">
         <Sidebar collapsible="none" class="hidden md:flex">
           <SidebarContent>
@@ -122,4 +133,6 @@ const open = ref(true)
           </div>
         </main>
       </SidebarProvider>
+    </DialogContent>
+  </Dialog>
 </template>
