@@ -40,6 +40,18 @@ const router = createRouter({
       component: () => import('../components/ui/dashboard/index.vue'),
       meta: { auth: false },     // requires login — redirects to /login if not authed TODO: set to true when auth is implemented
     },
+    {
+      path: '/test',
+      name: 'test',
+      component: () => import('../pages/PageNotFound.vue'),
+      meta: { auth: false },     // requires login — redirects to /login if not authed TODO: set to true when auth is implemented
+    },
+    {
+      path: '/:pathMatch(.*)*',
+      name: 'PageNotFound',
+      component: () => import('@/pages/PageNotFound.vue'),
+      meta: { auth: false },     
+}
   ],
 })
 
