@@ -38,6 +38,9 @@ importers:
       vue:
         specifier: ^3.5.30
         version: 3.5.31(typescript@5.9.3)
+      vue-auth3:
+        specifier: ^1.1.2
+        version: 1.1.2
       vue-router:
         specifier: ^5.0.3
         version: 5.0.4(@vue/compiler-sfc@3.5.31)(pinia@3.0.4(typescript@5.9.3)(vue@3.5.31(typescript@5.9.3)))(vue@3.5.31(typescript@5.9.3))
@@ -1942,6 +1945,9 @@ packages:
   vscode-uri@3.1.0:
     resolution: {integrity: sha512-/BpdSx+yCQGnCvecbyXdxHDkuk55/G3xwnC0GqY4gmQ3j+A+g8kzzgB4Nk/SINjqn6+waqw3EgbVF2QKExkRxQ==}
 
+  vue-auth3@1.1.2:
+    resolution: {integrity: sha512-sEmKphIQqHnS+1gGabm0iGtJwSBonMirobYJOEB0Ppqupq5TaVG7/y+9qH51i+ZnYQAuUadXmbRfxQT0y7o2CQ==}
+
   vue-demi@0.14.10:
     resolution: {integrity: sha512-nMZBOwuzabUO0nLgIcc6rycZEebF6eeUfaiQx9+WSk8e29IbLvPU9feI6tqW4kTo3hvoYAJkMh8n8D0fuISphg==}
     engines: {node: '>=12'}
@@ -3735,6 +3741,8 @@ snapshots:
       yaml: 2.8.3
 
   vscode-uri@3.1.0: {}
+
+  vue-auth3@1.1.2: {}
 
   vue-demi@0.14.10(vue@3.5.31(typescript@5.9.3)):
     dependencies:

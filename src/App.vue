@@ -7,9 +7,12 @@ SPDX-License-Identifier: LicenseRef-SSPL-1.0
 -->
 
 <script setup lang="ts">
-import { RouterLink, RouterView } from 'vue-router'
+import { RouterView } from 'vue-router'
 </script>
 
 <template>
-  
+  <RouterView />
 </template>
+
+<style>
+</style>
