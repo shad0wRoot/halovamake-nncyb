@@ -19,19 +19,21 @@ const router = createRouter({
     {
       path: '/login',
       name: 'login',
-      component: () => import('../views/LoginView.vue'),
+      component: () => import('../components/ui/login/index.vue'),
       meta: { auth: false },
     },
     {
       path: '/register',
       name: 'register',
-      component: () => import('../views/SignUpView.vue'),
+      component: () => import('../components/ui/signup/index.vue'),
       meta: { auth: false },
     },
     {
       path: '/signup',
       name: 'signup',
       component: () => import('../components/ui/signup/index.vue'),
+      meta: { auth: false },
+    },
     },    
     {
       path: '/login',
