@@ -39,7 +39,6 @@ import {
   IconDotsVertical,
   IconLayoutColumns,
   IconLoader,
-  IconPlus,
 } from "@tabler/icons-vue"
 import {
   FlexRender,
@@ -83,8 +82,6 @@ import {
 import {
   Tabs,
   TabsContent,
-  TabsList,
-  TabsTrigger,
 } from '@/components/ui/tabs'
 import { h, ref } from "vue"
 
@@ -186,25 +183,11 @@ const columns: ColumnDef<TableData>[] = [
     header: "Reviewer",
     cell: ({ row }) => {
       const reviewer = row.getValue("reviewer") as string
-      const isAssigned = reviewer !== "Assign reviewer"
-
-      if (isAssigned) {
-        return h("span", {}, reviewer)
+      if (reviewer === "Assign reviewer") {
+        return h("span", { class: "text-muted-foreground" }, "Unassigned")
       }
 
-      return h(Select, {}, {
-        default: () => [
-          h(SelectTrigger, { class: "w-full" }, {
-            default: () => h(SelectValue, { placeholder: "Assign reviewer" }),
-          }),
-          h(SelectContent, {}, {
-            default: () => [
-              h(SelectItem, { value: "eddie" }, () => "Eddie Lake"),
-              h(SelectItem, { value: "jamik" }, () => "Jamik Tashpulatov"),
-            ],
-          }),
-        ],
-      })
+      return h("span", { class: "text-foreground" }, reviewer)
     },
   },
   {
@@ -276,54 +259,13 @@ const table = useVueTable({
 
 <template>
   <Tabs
-    default-value="outline"
+    default-value="overview"
     class="w-full flex-col justify-start gap-6"
   >
     <div class="flex items-center justify-between px-4 lg:px-6">
-      <Label for="view-selector" class="sr-only">
-        View
-      </Label>
-      <Select default-value="outline">
-        <SelectTrigger
-          id="view-selector"
-          class="flex w-fit @4xl/main:hidden"
-          size="sm"
-        >
-          <SelectValue placeholder="Select a view" />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="outline">
-            Outline
-          </SelectItem>
-          <SelectItem value="past-performance">
-            Past Performance
-          </SelectItem>
-          <SelectItem value="key-personnel">
-            Key Personnel
-          </SelectItem>
-          <SelectItem value="focus-documents">
-            Focus Documents
-          </SelectItem>
-        </SelectContent>
-      </Select>
-      <TabsList class="**:data-[slot=badge]:bg-muted-foreground/30 hidden **:data-[slot=badge]:size-5 **:data-[slot=badge]:rounded-full **:data-[slot=badge]:px-1 @4xl/main:flex">
-        <TabsTrigger value="outline">
-          Outline
-        </TabsTrigger>
-        <TabsTrigger value="past-performance">
-          Past Performance <Badge variant="secondary">
-            3
-          </Badge>
-        </TabsTrigger>
-        <TabsTrigger value="key-personnel">
-          Key Personnel <Badge variant="secondary">
-            2
-          </Badge>
-        </TabsTrigger>
-        <TabsTrigger value="focus-documents">
-          Focus Documents
-        </TabsTrigger>
-      </TabsList>
+      <h2 class="text-foreground text-sm font-semibold tracking-wide uppercase">
+        Overview
+      </h2>
       <div class="flex items-center gap-2">
         <DropdownMenu>
           <DropdownMenuTrigger as-child>
@@ -349,14 +291,10 @@ const table = useVueTable({
             </template>
           </DropdownMenuContent>
         </DropdownMenu>
-        <Button variant="outline" size="sm">
-          <IconPlus />
-          <span class="hidden lg:inline">Add Section</span>
-        </Button>
       </div>
     </div>
     <TabsContent
-      value="outline"
+      value="overview"
       class="relative flex flex-col gap-4 overflow-auto px-4 lg:px-6"
     >
       <div class="overflow-hidden rounded-lg border">

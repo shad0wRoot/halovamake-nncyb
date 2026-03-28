@@ -9,12 +9,11 @@ SPDX-License-Identifier: LicenseRef-SSPL-1.0
 <script setup lang="ts">
 import {
   IconSettings,
-  IconCreditCard,
   IconDotsVertical,
   IconLogout,
-  IconNotification,
   IconUserCircle,
 } from "@tabler/icons-vue"
+import { RouterLink } from "vue-router"
 
 import {
   Avatar,
@@ -98,23 +97,25 @@ const { isMobile } = useSidebar()
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
           <DropdownMenuGroup>
-            <DropdownMenuItem>
-              <IconUserCircle />
-              Account
+            <DropdownMenuItem as-child>
+              <RouterLink to="/account">
+                <IconUserCircle />
+                Account
+              </RouterLink>
             </DropdownMenuItem>
-            <DropdownMenuItem>
-              <IconSettings />
-              Settings
-            </DropdownMenuItem>
-            <DropdownMenuItem>
-              <IconNotification />
-              Notifications
+            <DropdownMenuItem as-child>
+              <RouterLink to="/settings">
+                <IconSettings />
+                Settings
+              </RouterLink>
             </DropdownMenuItem>
           </DropdownMenuGroup>
           <DropdownMenuSeparator />
-          <DropdownMenuItem>
-            <IconLogout />
-            Log out
+          <DropdownMenuItem as-child>
+            <RouterLink to="/login">
+              <IconLogout />
+              Log out
+            </RouterLink>
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>

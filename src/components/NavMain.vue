@@ -8,10 +8,10 @@ SPDX-License-Identifier: LicenseRef-SSPL-1.0
 
 <script setup lang="ts">
 import type { Component } from "vue"
-import { IconCirclePlusFilled, IconMail } from "@tabler/icons-vue"
-import { RouterLink } from "vue-router"
+import { IconCirclePlusFilled } from "@tabler/icons-vue"
+import { computed } from "vue"
+import { RouterLink, useRoute } from "vue-router"
 
-import { Button } from '@/components/ui/button'
 import {
   SidebarGroup,
   SidebarGroupContent,
@@ -29,6 +29,19 @@ interface NavItem {
 defineProps<{
   items: NavItem[]
 }>()
+
+const route = useRoute()
+
+function normalizePath(path: string) {
+  return path.split("?")[0]
+}
+
+function isActivePath(path: string) {
+  const normalizedPath = normalizePath(path)
+  return route.path === normalizedPath || route.path.startsWith(`${normalizedPath}/`)
+}
+
+const isCreateActive = computed(() => isActivePath("/create"))
 </script>
 
 <template>
@@ -37,17 +50,20 @@ defineProps<{
       <SidebarMenu>
         <SidebarMenuItem class="flex items-center gap-2">
           <SidebarMenuButton
+            as-child
             tooltip="Create Request"
-            class="bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground active:bg-primary/90 active:text-primary-foreground min-w-8 duration-200 ease-linear"
+            :is-active="isCreateActive"
           >
-            <IconCirclePlusFilled />
-            <span>Create Request</span>
+            <RouterLink to="/create">
+              <IconCirclePlusFilled />
+              <span>Create Request</span>
+            </RouterLink>
           </SidebarMenuButton>
         </SidebarMenuItem>
       </SidebarMenu>
       <SidebarMenu>
         <SidebarMenuItem v-for="item in items" :key="item.title">
-          <SidebarMenuButton as-child :tooltip="item.title">
+          <SidebarMenuButton as-child :tooltip="item.title" :is-active="isActivePath(item.url)">
             <RouterLink :to="item.url">
               <component :is="item.icon" v-if="item.icon" />
               <span>{{ item.title }}</span>
