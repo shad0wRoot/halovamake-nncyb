@@ -131,7 +131,7 @@ const columns: ColumnDef<TableData>[] = [
   {
     accessorKey: "header",
     header: "Header",
-    cell: ({ row }) => h("div", String(row.getValue("header"))),
+    cell: ({ row }) => h("div", { class: "text-foreground" }, String(row.getValue("header"))),
     enableHiding: false,
   },
   {
@@ -139,6 +139,7 @@ const columns: ColumnDef<TableData>[] = [
     header: "Section Type",
     cell: ({ row }) => h(Badge, {
       variant: "outline",
+      class: "text-foreground",
     }, () => String(row.getValue("type"))),
   },
   {

@@ -8,6 +8,7 @@ SPDX-License-Identifier: LicenseRef-SSPL-1.0
 
 <script setup lang="ts">
 import {
+  IconSettings,
   IconCreditCard,
   IconDotsVertical,
   IconLogout,
@@ -102,8 +103,8 @@ const { isMobile } = useSidebar()
               Account
             </DropdownMenuItem>
             <DropdownMenuItem>
-              <IconCreditCard />
-              Billing
+              <IconSettings />
+              Settings
             </DropdownMenuItem>
             <DropdownMenuItem>
               <IconNotification />
