@@ -1,0 +1,6 @@
+- login
+- signup
+- dashboard (admin)
+- dashboard (user)
+	- form page (user)
+- 404
