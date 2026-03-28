@@ -186,25 +186,11 @@ const columns: ColumnDef<TableData>[] = [
     header: "Reviewer",
     cell: ({ row }) => {
       const reviewer = row.getValue("reviewer") as string
-      const isAssigned = reviewer !== "Assign reviewer"
-
-      if (isAssigned) {
-        return h("span", {}, reviewer)
+      if (reviewer === "Assign reviewer") {
+        return h("span", { class: "text-muted-foreground" }, "Unassigned")
       }
 
-      return h(Select, {}, {
-        default: () => [
-          h(SelectTrigger, { class: "w-full" }, {
-            default: () => h(SelectValue, { placeholder: "Assign reviewer" }),
-          }),
-          h(SelectContent, {}, {
-            default: () => [
-              h(SelectItem, { value: "eddie" }, () => "Eddie Lake"),
-              h(SelectItem, { value: "jamik" }, () => "Jamik Tashpulatov"),
-            ],
-          }),
-        ],
-      })
+      return h("span", { class: "text-foreground" }, reviewer)
     },
   },
   {

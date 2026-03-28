@@ -8,21 +8,13 @@ SPDX-License-Identifier: LicenseRef-SSPL-1.0
 
 <script setup lang="ts">
 import {
-  IconCamera,
-  IconChartBar,
   IconDashboard,
-  IconDatabase,
-  IconFileAi,
-  IconFileDescription,
-  IconFolder,
-  IconHelp,
   IconInnerShadowTop,
   IconListDetails,
-  IconReport,
-  IconSearch,
+  IconNotification,
   IconSettings,
-  IconUsers,
 } from "@tabler/icons-vue"
+import { RouterLink } from "vue-router"
 
 import NavDocuments from '@/components/NavDocuments.vue'
 import NavMain from '@/components/NavMain.vue'
@@ -52,8 +44,13 @@ const data = {
     },
     {
       title: "My Appeals",
-      url: "/dashboard?tab=appeals",
+      url: "/appeals",
       icon: IconListDetails,
+    },
+    {
+      title: "Notifications",
+      url: "/notifications",
+      icon: IconNotification,
     },
   ],
 }
@@ -68,10 +65,10 @@ const data = {
             as-child
             class="data-[slot=sidebar-menu-button]:!p-1.5"
           >
-            <a href="/">
+            <RouterLink to="/dashboard">
               <IconInnerShadowTop class="!size-5" />
               <span class="text-base font-semibold">NNCYB</span>
-            </a>
+            </RouterLink>
           </SidebarMenuButton>
         </SidebarMenuItem>
       </SidebarMenu>

@@ -40,6 +40,36 @@ const router = createRouter({
       component: () => import('../components/ui/dashboard/index.vue'),
       meta: { auth: false },     // requires login — redirects to /login if not authed TODO: set to true when auth is implemented
     },
+    {
+      path: '/appeals',
+      name: 'appeals',
+      component: () => import('../components/ui/dashboard/index.vue'),
+      meta: { auth: false },
+    },
+    {
+      path: '/create',
+      name: 'create',
+      component: () => import('../components/ui/dashboard/index.vue'),
+      meta: { auth: false },
+    },
+    {
+      path: '/settings',
+      name: 'settings',
+      component: () => import('../components/ui/dashboard/index.vue'),
+      meta: { auth: false },
+    },
+    {
+      path: '/account',
+      name: 'account',
+      component: () => import('../components/ui/dashboard/index.vue'),
+      meta: { auth: false },
+    },
+    {
+      path: '/notifications',
+      name: 'notifications',
+      component: () => import('../components/ui/dashboard/index.vue'),
+      meta: { auth: false },
+    },
   ],
 })
 

@@ -8,10 +8,9 @@ SPDX-License-Identifier: LicenseRef-SSPL-1.0
 
 <script setup lang="ts">
 import type { Component } from "vue"
-import { IconCirclePlusFilled, IconMail } from "@tabler/icons-vue"
+import { IconCirclePlusFilled } from "@tabler/icons-vue"
 import { RouterLink } from "vue-router"
 
-import { Button } from '@/components/ui/button'
 import {
   SidebarGroup,
   SidebarGroupContent,
@@ -37,11 +36,13 @@ defineProps<{
       <SidebarMenu>
         <SidebarMenuItem class="flex items-center gap-2">
           <SidebarMenuButton
+            as-child
             tooltip="Create Request"
-            class="bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground active:bg-primary/90 active:text-primary-foreground min-w-8 duration-200 ease-linear"
           >
-            <IconCirclePlusFilled />
-            <span>Create Request</span>
+            <RouterLink to="/create">
+              <IconCirclePlusFilled />
+              <span>Create Request</span>
+            </RouterLink>
           </SidebarMenuButton>
         </SidebarMenuItem>
       </SidebarMenu>
