@@ -36,29 +36,37 @@ import {
 } from '@/components/ui/select'
 import { computed, ref } from "vue"
 
-const description = "An interactive area chart"
+const description = "Request outcome trends"
 
 const chartData = [
-  { date: new Date("2024-04-01"), accepted: 222, pending: 150, denied: 50 },
-  { date: new Date("2024-04-15"), accepted: 333, pending: 200, denied: 80 },
-  { date: new Date("2024-05-01"), accepted: 444, pending: 250, denied: 100 },
-  { date: new Date("2024-05-15"), accepted: 555, pending: 300, denied: 120 },
-  { date: new Date("2024-06-01"), accepted: 666, pending: 350, denied: 150 },
+  { date: new Date("2024-04-01"), accepted: 2, pending: 1, denied: 0 },
+  { date: new Date("2024-04-08"), accepted: 1, pending: 2, denied: 0 },
+  { date: new Date("2024-04-15"), accepted: 3, pending: 1, denied: 1 },
+  { date: new Date("2024-04-22"), accepted: 2, pending: 2, denied: 0 },
+  { date: new Date("2024-04-29"), accepted: 4, pending: 1, denied: 0 },
+  { date: new Date("2024-05-06"), accepted: 3, pending: 2, denied: 1 },
+  { date: new Date("2024-05-13"), accepted: 5, pending: 2, denied: 0 },
+  { date: new Date("2024-05-20"), accepted: 4, pending: 3, denied: 1 },
+  { date: new Date("2024-05-27"), accepted: 6, pending: 2, denied: 0 },
+  { date: new Date("2024-06-03"), accepted: 5, pending: 2, denied: 1 },
+  { date: new Date("2024-06-10"), accepted: 7, pending: 2, denied: 1 },
+  { date: new Date("2024-06-17"), accepted: 8, pending: 1, denied: 1 },
+  { date: new Date("2024-06-24"), accepted: 9, pending: 1, denied: 0 },
 ]
 type Data = typeof chartData[number]
 
 const chartConfig = {
   accepted: {
     label: "Accepted",
-    color: "var(--primary)",
+    color: "#22c55e",
   },
   pending: {
     label: "Pending",
-    color: "var(--primary)",
+    color: "#eab308",
   },
   denied: {
     label: "Denied",
-    color: "var(--primary)",
+    color: "#ef4444",
   },
 
 } satisfies ChartConfig
@@ -125,9 +133,9 @@ const filterRange = computed(() => {
   <Card class="pt-0">
     <CardHeader class="flex items-center gap-2 space-y-0 border-b py-5 sm:flex-row">
       <div class="grid flex-1 gap-1">
-        <CardTitle>Area Chart - Interactive</CardTitle>
+        <CardTitle>Request Outcomes Overview</CardTitle>
         <CardDescription>
-          Showing current status of all requests
+          Approved, pending, and denied request counts over time
         </CardDescription>
       </div>
       <Select v-model="timeRange">
@@ -156,7 +164,7 @@ const filterRange = computed(() => {
           :data="filterRange"
           :svg-defs="svgDefs"
           :margin="{ left: -40 }"
-          :y-domain="[0, 1200]"
+          :y-domain="[0, 10]"
         >
           <VisArea
             :x="(d: Data) => d.date"
