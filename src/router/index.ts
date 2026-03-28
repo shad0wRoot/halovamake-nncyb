@@ -29,20 +29,21 @@ const router = createRouter({
       meta: { auth: false },
     },
     {
+      path: '/signup',
+      name: 'signup',
+      component: () => import('../components/ui/signup/index.vue'),
+    },    
+    {
       path: '/login',
       name: 'login',
       component: () => import('../components/ui/login/index.vue'),
     },
-    {
-      path: '/signup',
-      name: 'signup',
-      component: () => import('../components/ui/signup/index.vue'),
-    },
+
     {
       path: '/dashboard',
       name: 'dashboard',
       component: () => import('../components/ui/sidebar/index.vue'),
-      meta: { auth: true },     // requires login — redirects to /login if not authed
+      meta: { auth: false },     // requires login — redirects to /login if not authed TODO: set to true when auth is implemented
     },
   ],
 })
