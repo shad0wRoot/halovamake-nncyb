@@ -7,9 +7,14 @@ export interface IUser extends mongoose.PassportLocalDocument {
    email: string;
    fullName: string;
    roles: string[];
+   phoneNumber: number;
+   company: string;
+   companyType: string;
+   investor: string;
    active: boolean;
    createdAt: Date;
    updatedAt: Date;
+
 }
 
 const userSchema = new Schema<IUser>(
@@ -17,7 +22,12 @@ const userSchema = new Schema<IUser>(
       email: { type: String, required: true, unique: true },
       fullName: { type: String, required: true },
       roles: { type: [String], required: true, default: [] },
+      phoneNumber: { type: Number, required: false},
+      company: { type: String, required: false},
+      companyType: { type: String, required: false},
+      investor: { type: String, required: false},
       active: { type: Boolean, required: true, default: true },
+
    },
    { timestamps: true }
 );

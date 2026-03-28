@@ -7,3 +7,4 @@
 allowBuilds:
   esbuild: false
   maplibre-gl: false
+  vue-demi: true
