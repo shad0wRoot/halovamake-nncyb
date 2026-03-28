@@ -14,14 +14,25 @@ const router = createRouter({
       path: '/',
       name: 'home',
       component: HomeView,
+      meta: { auth: false },    // public
+    },
+    {
+      path: '/login',
+      name: 'login',
+      component: () => import('../views/LoginView.vue'),
+      meta: { auth: false },
+    },
+    {
+      path: '/register',
+      name: 'register',
+      component: () => import('../views/RegisterView.vue'),
+      meta: { auth: false },
     },
     {
       path: '/dashboard',
       name: 'dashboard',
-      // route level code-splitting
-      // this generates a separate chunk (Dashboard.[hash].js) for this route
-      // which is lazy-loaded when the route is visited.
       component: () => import('../components/ui/sidebar/index.vue'),
+      meta: { auth: true },     // requires login — redirects to /login if not authed
     },
   ],
 })
