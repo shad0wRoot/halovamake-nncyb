@@ -40,7 +40,7 @@ const props = defineProps<{
               <FieldLabel for="name">
                 Full Name
               </FieldLabel>
-              <Input id="name" type="text" placeholder="John Doe" required />
+              <Input id="name" type="text" placeholder="John Pork" required />
             </Field>
             <Field>
               <FieldLabel for="email">
@@ -49,7 +49,7 @@ const props = defineProps<{
               <Input
                 id="email"
                 type="email"
-                placeholder="m@example.com"
+                placeholder="s0cM4js3r@nncyb.com"
                 required
               />
             </Field>
@@ -77,7 +77,7 @@ const props = defineProps<{
                 Create Account
               </Button>
               <FieldDescription class="text-center">
-                Already have an account? <a href="#">Sign in</a>
+                Already have an account? <RouterLink to="/login">Sign in</RouterLink>
               </FieldDescription>
             </Field>
           </FieldGroup>

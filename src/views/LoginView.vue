@@ -17,6 +17,7 @@ import {
   FieldSeparator,
 } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
+import type router from "@/router"
 
 const props = defineProps<{
   class?: HTMLAttributes["class"]
@@ -44,7 +45,7 @@ const props = defineProps<{
               <Input
                 id="email"
                 type="email"
-                placeholder="socmajster@binaryconfidance.com"
+                placeholder="s0cM4js3r@nncyb.com"
                 required
               />
             </Field>
@@ -68,9 +69,9 @@ const props = defineProps<{
               </Button>
               <FieldDescription class="text-center">
                 Don't have an account?
-                <a href="#">
+                <router-link to="/signup">
                   Sign up
-                </a>
+                </router-link>
               </FieldDescription>
             </Field>
           </FieldGroup>
