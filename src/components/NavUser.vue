@@ -13,7 +13,7 @@ import {
   IconLogout,
   IconUserCircle,
 } from "@tabler/icons-vue"
-import { useRouter } from "vue-router"
+import { RouterLink } from "vue-router"
 
 import {
   Avatar,
@@ -47,7 +47,6 @@ defineProps<{
 }>()
 
 const { isMobile } = useSidebar()
-const router = useRouter()
 </script>
 
 <template>
@@ -98,19 +97,25 @@ const router = useRouter()
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
           <DropdownMenuGroup>
-            <DropdownMenuItem @select="router.push('/account')">
-              <IconUserCircle />
-              Account
+            <DropdownMenuItem as-child>
+              <RouterLink to="/account">
+                <IconUserCircle />
+                Account
+              </RouterLink>
             </DropdownMenuItem>
-            <DropdownMenuItem @select="router.push('/settings')">
-              <IconSettings />
-              Settings
+            <DropdownMenuItem as-child>
+              <RouterLink to="/settings">
+                <IconSettings />
+                Settings
+              </RouterLink>
             </DropdownMenuItem>
           </DropdownMenuGroup>
           <DropdownMenuSeparator />
-          <DropdownMenuItem @select="router.push('/login')">
-            <IconLogout />
-            Log out
+          <DropdownMenuItem as-child>
+            <RouterLink to="/login">
+              <IconLogout />
+              Log out
+            </RouterLink>
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>

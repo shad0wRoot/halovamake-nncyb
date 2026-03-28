@@ -9,10 +9,10 @@ SPDX-License-Identifier: LicenseRef-SSPL-1.0
 <script setup lang="ts">
 import {
   IconDashboard,
+  IconFileDescription,
   IconInnerShadowTop,
   IconListDetails,
   IconNotification,
-  IconSettings,
 } from "@tabler/icons-vue"
 import { RouterLink } from "vue-router"
 
@@ -46,6 +46,11 @@ const data = {
       title: "My Appeals",
       url: "/appeals",
       icon: IconListDetails,
+    },
+    {
+      title: "Drafts",
+      url: "/drafts",
+      icon: IconFileDescription,
     },
     {
       title: "Notifications",

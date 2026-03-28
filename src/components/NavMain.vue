@@ -9,7 +9,8 @@ SPDX-License-Identifier: LicenseRef-SSPL-1.0
 <script setup lang="ts">
 import type { Component } from "vue"
 import { IconCirclePlusFilled } from "@tabler/icons-vue"
-import { RouterLink } from "vue-router"
+import { computed } from "vue"
+import { RouterLink, useRoute } from "vue-router"
 
 import {
   SidebarGroup,
@@ -28,6 +29,19 @@ interface NavItem {
 defineProps<{
   items: NavItem[]
 }>()
+
+const route = useRoute()
+
+function normalizePath(path: string) {
+  return path.split("?")[0]
+}
+
+function isActivePath(path: string) {
+  const normalizedPath = normalizePath(path)
+  return route.path === normalizedPath || route.path.startsWith(`${normalizedPath}/`)
+}
+
+const isCreateActive = computed(() => isActivePath("/create"))
 </script>
 
 <template>
@@ -38,6 +52,7 @@ defineProps<{
           <SidebarMenuButton
             as-child
             tooltip="Create Request"
+            :is-active="isCreateActive"
           >
             <RouterLink to="/create">
               <IconCirclePlusFilled />
@@ -48,7 +63,7 @@ defineProps<{
       </SidebarMenu>
       <SidebarMenu>
         <SidebarMenuItem v-for="item in items" :key="item.title">
-          <SidebarMenuButton as-child :tooltip="item.title">
+          <SidebarMenuButton as-child :tooltip="item.title" :is-active="isActivePath(item.url)">
             <RouterLink :to="item.url">
               <component :is="item.icon" v-if="item.icon" />
               <span>{{ item.title }}</span>
