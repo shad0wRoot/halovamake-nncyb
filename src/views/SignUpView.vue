@@ -85,7 +85,10 @@ const props = defineProps<{
                 Create Account
               </Button>
               <FieldDescription class="text-center">
-                Already have an account? <RouterLink to="/login">Sign in</RouterLink>
+                Already have an account?
+                <RouterLink to="/login" class="auth-link ml-1">
+                  Sign in
+                </RouterLink>
               </FieldDescription>
             </Field>
           </FieldGroup>
@@ -93,8 +96,8 @@ const props = defineProps<{
       </CardContent>
     </Card>
     <FieldDescription class="px-6 text-center">
-      By clicking continue, you agree to our <a href="#">Terms of Service</a>
-      and <a href="#">Privacy Policy</a>.
+      By clicking continue, you agree to our <a href="#" class="auth-link">Terms of Service</a>
+      and <a href="#" class="auth-link">Privacy Policy</a>.
     </FieldDescription>
   </div>
 </template>

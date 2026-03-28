@@ -22,10 +22,8 @@ import {
   FieldDescription,
   FieldGroup,
   FieldLabel,
-  FieldSeparator,
 } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
-import type router from "@/router"
 
 const props = defineProps<{
   class?: HTMLAttributes["class"]
@@ -64,7 +62,7 @@ const props = defineProps<{
                 </FieldLabel>
                 <a
                   href="#"
-                  class="ml-auto text-sm underline-offset-4 hover:underline"
+                  class="auth-link ml-auto text-sm"
                 >
                   Forgot your password?
                 </a>
@@ -77,7 +75,7 @@ const props = defineProps<{
               </Button>
               <FieldDescription class="text-center">
                 Don't have an account?
-                <router-link to="/signup">
+                <router-link to="/signup" class="auth-link ml-1">
                   Sign up
                 </router-link>
               </FieldDescription>
@@ -87,8 +85,8 @@ const props = defineProps<{
       </CardContent>
     </Card>
     <FieldDescription class="px-6 text-center">
-      By clicking continue, you agree to our <a href="#">Terms of Service</a>
-      and <a href="#">Privacy Policy</a>.
+      By clicking continue, you agree to our <a href="#" class="auth-link">Terms of Service</a>
+      and <a href="#" class="auth-link">Privacy Policy</a>.
     </FieldDescription>
   </div>
 </template>
