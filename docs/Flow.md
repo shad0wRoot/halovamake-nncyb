@@ -4,7 +4,7 @@
 3. Form submit:
 	1. Žiadosť obsahuje relevantné informácie - Oblasti sú napríklad hladanie zamestnanca, hladanie investora, možnosť speakovať na evente, zdielanie marketingových podkladov na sociálnych sieťach, podpora v oblasti sales, hladanie klientov a ďalšie | overuje local AI
 	2.  Po submite vidis pocet schvalenych ziadosti etc
-	3. In case of denial or any other issues, he can appeal, by editing the request into a v2...
+	3. In case of denial or any other issues, he can appeal, by editing the request into a v2... It assigns the same reviewer without AI
 ## Admin
 1. Dashboard ->
 	1. Backend panel
