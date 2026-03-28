@@ -16,6 +16,16 @@ const router = createRouter({
       component: HomeView,
     },
     {
+      path: '/login',
+      name: 'login',
+      component: () => import('../components/ui/login/index.vue'),
+    },
+    {
+      path: '/signup',
+      name: 'signup',
+      component: () => import('../components/ui/signup/index.vue'),
+    },
+    {
       path: '/dashboard',
       name: 'dashboard',
       // route level code-splitting
