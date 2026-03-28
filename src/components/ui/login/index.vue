@@ -1,3 +1,11 @@
+<!--
+SPDX-FileCopyrightText: 2026 Martin Královič
+SPDX-FileCopyrightText: 2026 Samuel Juhaniak
+SPDX-FileCopyrightText: 2026 Tadeáš Ditte
+
+SPDX-License-Identifier: LicenseRef-SSPL-1.0
+-->
+
 <script lang="ts">
 export const description = "A login page with a muted background color."
 </script>

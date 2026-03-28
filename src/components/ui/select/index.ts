@@ -1,3 +1,9 @@
+// SPDX-FileCopyrightText: 2026 Martin Královič
+// SPDX-FileCopyrightText: 2026 Samuel Juhaniak
+// SPDX-FileCopyrightText: 2026 Tadeáš Ditte
+//
+// SPDX-License-Identifier: LicenseRef-SSPL-1.0
+
 export { default as Select } from "./Select.vue"
 export { default as SelectContent } from "./SelectContent.vue"
 export { default as SelectGroup } from "./SelectGroup.vue"

@@ -1,3 +1,11 @@
+<!--
+SPDX-FileCopyrightText: 2026 Martin Královič
+SPDX-FileCopyrightText: 2026 Samuel Juhaniak
+SPDX-FileCopyrightText: 2026 Tadeáš Ditte
+
+SPDX-License-Identifier: LicenseRef-SSPL-1.0
+-->
+
 <script setup lang="ts">
 import type { ChartConfig } from '@/components/ui/chart'
 
@@ -26,6 +34,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { computed, ref } from "vue"
 
 const description = "An interactive area chart"
 

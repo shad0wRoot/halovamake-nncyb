@@ -1,3 +1,11 @@
+<!--
+SPDX-FileCopyrightText: 2026 Martin Královič
+SPDX-FileCopyrightText: 2026 Samuel Juhaniak
+SPDX-FileCopyrightText: 2026 Tadeáš Ditte
+
+SPDX-License-Identifier: LicenseRef-SSPL-1.0
+-->
+
 <script lang="ts">
 import { z } from "zod"
 import DraggableRow from "./DraggableRow.vue"
@@ -21,7 +29,6 @@ import type {
   SortingState,
   VisibilityState,
 } from "@tanstack/vue-table"
-import { RestrictToVerticalAxis } from "@dnd-kit/abstract/modifiers"
 import {
   IconChevronDown,
   IconChevronLeft,
@@ -79,6 +86,7 @@ import {
   TabsList,
   TabsTrigger,
 } from '@/components/ui/tabs'
+import { h, ref } from "vue"
 
 const props = defineProps<{
   data: TableData[]
@@ -109,12 +117,12 @@ const columns: ColumnDef<TableData>[] = [
     id: "select",
     header: ({ table }) => h(Checkbox, {
       "modelValue": table.getIsAllPageRowsSelected() || (table.getIsSomePageRowsSelected() && "indeterminate"),
-      "onUpdate:modelValue": value => table.toggleAllPageRowsSelected(!!value),
+      "onUpdate:modelValue": (value: boolean | "indeterminate") => table.toggleAllPageRowsSelected(!!value),
       "aria-label": "Select all",
     }),
     cell: ({ row }) => h(Checkbox, {
       "modelValue": row.getIsSelected(),
-      "onUpdate:modelValue": value => row.toggleSelected(!!value),
+      "onUpdate:modelValue": (value: boolean | "indeterminate") => row.toggleSelected(!!value),
       "aria-label": "Select row",
     }),
     enableSorting: false,
@@ -351,7 +359,7 @@ const table = useVueTable({
       class="relative flex flex-col gap-4 overflow-auto px-4 lg:px-6"
     >
       <div class="overflow-hidden rounded-lg border">
-        <DragDropProvider :modifiers="[RestrictToVerticalAxis]">
+        <DragDropProvider>
           <Table>
             <TableHeader class="bg-muted sticky top-0 z-10">
               <TableRow v-for="headerGroup in table.getHeaderGroups()" :key="headerGroup.id">

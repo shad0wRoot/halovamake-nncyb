@@ -1,3 +1,11 @@
+<!--
+SPDX-FileCopyrightText: 2026 Martin Královič
+SPDX-FileCopyrightText: 2026 Samuel Juhaniak
+SPDX-FileCopyrightText: 2026 Tadeáš Ditte
+
+SPDX-License-Identifier: LicenseRef-SSPL-1.0
+-->
+
 <script setup lang="ts">
 import type { Row } from "@tanstack/vue-table"
 import type { z } from "zod"
@@ -19,7 +27,7 @@ const { elementRef, isDragging } = useSortable({
 
 <template>
   <TableRow
-    :ref="elementRef"
+    :ref="elementRef as any"
     :data-state="row.getIsSelected() && 'selected'"
     :data-dragging="isDragging"
     class="relative z-0 data-[dragging=true]:z-10 data-[dragging=true]:opacity-80"

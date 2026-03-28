@@ -1,3 +1,11 @@
+<!--
+SPDX-FileCopyrightText: 2026 Martin Královič
+SPDX-FileCopyrightText: 2026 Samuel Juhaniak
+SPDX-FileCopyrightText: 2026 Tadeáš Ditte
+
+SPDX-License-Identifier: LicenseRef-SSPL-1.0
+-->
+
 <script setup lang="ts">
 import { IconGripVertical } from "@tabler/icons-vue"
 import { useSortableContext } from "dnd-kit-vue"
@@ -8,7 +16,7 @@ const { handleRef, sortable } = useSortableContext()
 
 <template>
   <Button
-    :ref="handleRef"
+    :ref="handleRef as any"
     variant="ghost"
     size="icon"
     class="text-muted-foreground size-7 hover:bg-transparent"

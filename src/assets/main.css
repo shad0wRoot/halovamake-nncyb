@@ -7,6 +7,8 @@
  */
 
 @import './base.css';
+@import "tailwindcss";
+@import "tw-animate-css";
 
 #app {
   width: 100%;

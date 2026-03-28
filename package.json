@@ -16,6 +16,7 @@
     "license": "reuse annotate --copyright=\"Tadeáš Ditte\" --copyright=\"Samuel Juhaniak\" --copyright=\"Martin Královič\" --year=\"2026\" --license \"LicenseRef-SSPL-1.0\" --fallback-dot-license --recursive ."
   },
   "dependencies": {
+    "@dnd-kit/modifiers": "^9.0.0",
     "@tabler/icons-vue": "^3.41.0",
     "@tailwindcss/vite": "^4.2.2",
     "@tanstack/vue-table": "^8.21.3",
@@ -25,6 +26,7 @@
     "axios": "^1.14.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "dnd-kit-vue": "^0.0.2",
     "lucide-vue-next": "^1.0.0",
     "pinia": "^3.0.4",
     "reka-ui": "^2.9.2",

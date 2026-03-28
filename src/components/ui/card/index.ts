@@ -1,3 +1,9 @@
+// SPDX-FileCopyrightText: 2026 Martin Královič
+// SPDX-FileCopyrightText: 2026 Samuel Juhaniak
+// SPDX-FileCopyrightText: 2026 Tadeáš Ditte
+//
+// SPDX-License-Identifier: LicenseRef-SSPL-1.0
+
 export { default as Card } from "./Card.vue"
 export { default as CardAction } from "./CardAction.vue"
 export { default as CardContent } from "./CardContent.vue"

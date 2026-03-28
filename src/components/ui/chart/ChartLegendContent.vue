@@ -1,3 +1,11 @@
+<!--
+SPDX-FileCopyrightText: 2026 Martin Královič
+SPDX-FileCopyrightText: 2026 Samuel Juhaniak
+SPDX-FileCopyrightText: 2026 Tadeáš Ditte
+
+SPDX-License-Identifier: LicenseRef-SSPL-1.0
+-->
+
 <script setup lang="ts">
 import type { HTMLAttributes } from "vue"
 import { computed, onMounted, ref } from "vue"
@@ -16,12 +24,21 @@ const props = withDefaults(defineProps<{
 
 const { id, config } = useChart()
 
-const payload = computed(() => Object.entries(config.value).map(([key, value]) => {
-  return {
-    key: props.nameKey || key,
-    itemConfig: config.value[key],
-  }
-}))
+const payload = computed(() => {
+  return Object.entries(config.value)
+    .map(([key]) => {
+      const itemConfig = config.value[key]
+      if (!itemConfig) {
+        return null
+      }
+
+      return {
+        key: props.nameKey || key,
+        itemConfig,
+      }
+    })
+    .filter((item): item is { key: string, itemConfig: NonNullable<typeof config.value[string]> } => item !== null)
+})
 
 const containerSelector = ref("")
 onMounted(() => {
