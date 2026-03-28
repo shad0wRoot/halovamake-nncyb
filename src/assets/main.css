@@ -23,11 +23,12 @@ a {
 }
 
 .auth-link {
-  text-decoration: underline !important;
+  text-decoration: none !important;
   text-underline-offset: 4px;
 }
 
 .auth-link:hover {
+  text-decoration: underline !important;
   opacity: 0.8;
 }
 
