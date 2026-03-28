@@ -5,7 +5,7 @@
 // SPDX-License-Identifier: LicenseRef-SSPL-1.0
 
 import { createRouter, createWebHistory } from 'vue-router'
-import HomeView from '../components/ui/sidebar/index.vue'
+import HomeView from '../components/ui/dashboard/index.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -37,7 +37,7 @@ const router = createRouter({
     {
       path: '/dashboard',
       name: 'dashboard',
-      component: () => import('../components/ui/sidebar/index.vue'),
+      component: () => import('../components/ui/dashboard/index.vue'),
       meta: { auth: false },     // requires login — redirects to /login if not authed TODO: set to true when auth is implemented
     },
   ],

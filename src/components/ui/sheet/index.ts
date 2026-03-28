@@ -1,9 +1,3 @@
-// SPDX-FileCopyrightText: 2026 Martin Královič
-// SPDX-FileCopyrightText: 2026 Samuel Juhaniak
-// SPDX-FileCopyrightText: 2026 Tadeáš Ditte
-//
-// SPDX-License-Identifier: LicenseRef-SSPL-1.0
-
 export { default as Sheet } from "./Sheet.vue"
 export { default as SheetClose } from "./SheetClose.vue"
 export { default as SheetContent } from "./SheetContent.vue"
