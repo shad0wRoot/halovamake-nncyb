@@ -12,7 +12,7 @@ export const description = "A sidebar with submenus."
 </script>
 
 <script setup lang="ts">
-import AppSidebar from "@/components/AppSidebar.vue"
+import AppSidebar from "@/views/AppSidebar.vue"
 import {
   Breadcrumb,
   BreadcrumbItem,

@@ -5,22 +5,31 @@
 // SPDX-License-Identifier: LicenseRef-SSPL-1.0
 
 import { createAuth } from 'vue-auth3'
-// @ts-ignore -- pnpm subpath resolution; types are bundled in dist
-import driverAuthBearer from 'vue-auth3/drivers/auth/bearer'
-// @ts-ignore
-import driverHttpAxios from 'vue-auth3/drivers/http/axios'
+import type { AuthDriver } from 'vue-auth3'
 import axios from 'axios'
 import router from '@/router'
 
-axios.defaults.baseURL = 'https://your-api.com'  // set your API base URL
+axios.defaults.baseURL = 'https://your-api.com'
+
+const driverAuthBearer: AuthDriver = {
+  request(_auth, options, token) {
+    options.headers = options.headers ?? {}
+    options.headers['Authorization'] = `Bearer ${token}`
+    return options
+  },
+  response(_auth, response) {
+    const header = (response.headers?.['authorization'] as string) ?? ''
+    const data = (response.data as { token?: string })?.token ?? ''
+    const raw = header || data
+    return raw.replace(/^Bearer\s?/, '') || null
+  },
+}
 
 const auth = createAuth({
-  plugins: {
-    router,
-  },
+  plugins: { router },
   drivers: {
     auth: driverAuthBearer,
-    http: driverHttpAxios,
+    http: { request: axios },
   },
   loginData: {
     url: '/api/auth/login',
