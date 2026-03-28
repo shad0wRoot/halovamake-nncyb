@@ -33,14 +33,7 @@ const router = createRouter({
       name: 'signup',
       component: () => import('../components/ui/signup/index.vue'),
       meta: { auth: false },
-    },
-    },    
-    {
-      path: '/login',
-      name: 'login',
-      component: () => import('../components/ui/login/index.vue'),
-    },
-
+    }, 
     {
       path: '/dashboard',
       name: 'dashboard',
