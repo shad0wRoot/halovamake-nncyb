@@ -5,7 +5,7 @@
 // SPDX-License-Identifier: LicenseRef-SSPL-1.0
 
 import { createRouter, createWebHistory } from 'vue-router'
-import DashboardLayout from '../components/ui/dashboard/Layout.vue'
+import DashboardLayout from '../pages/dashboard/Layout.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -13,19 +13,19 @@ const router = createRouter({
     {
       path: '/login',
       name: 'login',
-      component: () => import('../components/ui/login/index.vue'),
+      component: () => import('../pages/LoginPage.vue'),
       meta: { auth: false },
     },
     {
       path: '/register',
       name: 'register',
-      component: () => import('../components/ui/signup/index.vue'),
+      component: () => import('../pages/SignupPage.vue'),
       meta: { auth: false },
     },
     {
       path: '/signup',
       name: 'signup',
-      component: () => import('../components/ui/signup/index.vue'),
+      component: () => import('../pages/SignupPage.vue'),
       meta: { auth: false },
     },
     {
@@ -40,43 +40,43 @@ const router = createRouter({
         {
           path: 'dashboard',
           name: 'dashboard',
-          component: () => import('../components/ui/dashboard/index.vue'),
+          component: () => import('../pages/dashboard/DashboardPage.vue'),
           meta: { auth: false },
         },
         {
           path: 'appeals',
           name: 'appeals',
-          component: () => import('../components/ui/dashboard/AppealsPage.vue'),
+          component: () => import('../pages/dashboard/AppealsPage.vue'),
           meta: { auth: false },
         },
         {
           path: 'drafts',
           name: 'drafts',
-          component: () => import('../components/ui/dashboard/DraftsPage.vue'),
+          component: () => import('../pages/dashboard/DraftsPage.vue'),
           meta: { auth: false },
         },
         {
           path: 'create',
           name: 'create',
-          component: () => import('../components/ui/dashboard/CreatePage.vue'),
+          component: () => import('../pages/dashboard/CreatePage.vue'),
           meta: { auth: false },
         },
         {
           path: 'settings',
           name: 'settings',
-          component: () => import('../components/ui/dashboard/SettingsPage.vue'),
+          component: () => import('../pages/dashboard/SettingsPage.vue'),
           meta: { auth: false },
         },
         {
           path: 'account',
           name: 'account',
-          component: () => import('../components/ui/dashboard/AccountPage.vue'),
+          component: () => import('../pages/dashboard/AccountPage.vue'),
           meta: { auth: false },
         },
         {
           path: 'notifications',
           name: 'notifications',
-          component: () => import('../components/ui/dashboard/NotificationsPage.vue'),
+          component: () => import('../pages/dashboard/NotificationsPage.vue'),
           meta: { auth: false },
         },
       ],
@@ -84,13 +84,13 @@ const router = createRouter({
     {
       path: '/test',
       name: 'test',
-      component: () => import('../pages/PageNotFound.vue'),
+      component: () => import('../pages/NotFoundPage.vue'),
       meta: { auth: false },     // requires login — redirects to /login if not authed TODO: set to true when auth is implemented
     },
     {
       path: '/:pathMatch(.*)*',
       name: 'PageNotFound',
-      component: () => import('@/pages/PageNotFound.vue'),
+      component: () => import('@/pages/NotFoundPage.vue'),
       meta: { auth: false },     
 }
   ],
