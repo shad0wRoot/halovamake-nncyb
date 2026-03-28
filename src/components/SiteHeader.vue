@@ -7,9 +7,30 @@ SPDX-License-Identifier: LicenseRef-SSPL-1.0
 -->
 
 <script setup lang="ts">
-import { Button } from '@/components/ui/button'
+import { computed } from "vue"
+import { useRoute } from "vue-router"
 import { Separator } from '@/components/ui/separator'
 import { SidebarTrigger } from '@/components/ui/sidebar'
+
+const route = useRoute()
+
+const routeTitles: Record<string, string> = {
+  dashboard: "Dashboard",
+  appeals: "My Appeals",
+  drafts: "Drafts",
+  create: "Create Request",
+  settings: "Settings",
+  account: "Account",
+  notifications: "Notifications",
+  login: "Login",
+  signup: "Sign Up",
+  register: "Register",
+}
+
+const currentPageTitle = computed(() => {
+  const routeName = typeof route.name === "string" ? route.name : "dashboard"
+  return routeTitles[routeName] ?? "Dashboard"
+})
 </script>
 
 <template>
@@ -21,20 +42,9 @@ import { SidebarTrigger } from '@/components/ui/sidebar'
         class="mx-2 data-[orientation=vertical]:h-4"
       />
       <h1 class="text-foreground text-base font-medium">
-        Documents
+        {{ currentPageTitle }}
       </h1>
-      <div class="ml-auto flex items-center gap-2">
-        <Button variant="ghost" as-child size="sm" class="text-foreground hover:text-foreground hidden sm:flex">
-          <a
-            href="https://github.com/shadcn-ui/ui/tree/main/apps/v4/app/(examples)/dashboard"
-            rel="noopener noreferrer"
-            target="_blank"
-            class="text-foreground hover:text-foreground"
-          >
-            GitHub
-          </a>
-        </Button>
-      </div>
+      <div class="ml-auto" />
     </div>
   </header>
 </template>
