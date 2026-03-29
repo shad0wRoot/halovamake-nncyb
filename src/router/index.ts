@@ -6,6 +6,7 @@
 
 import { createRouter, createWebHistory } from 'vue-router'
 import DashboardLayout from '../pages/dashboard/Layout.vue'
+import { getAuthToken, getAuthUser } from '@/lib/authSession'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -106,6 +107,31 @@ const router = createRouter({
       meta: { auth: false },     
 }
   ],
+})
+
+router.beforeEach((to) => {
+  const publicPaths = new Set(['/login', '/register', '/signup'])
+  if (publicPaths.has(to.path))
+    return true
+
+  const token = getAuthToken()
+  if (!token)
+    return { name: 'login' }
+
+  if (to.path.startsWith('/admin')) {
+    const user = getAuthUser()
+    const allRoles = new Set(
+      [
+        ...(Array.isArray(user?.roles) ? user.roles : []),
+        ...(user?.role ? [user.role] : []),
+      ].map(role => role.toUpperCase()),
+    )
+    const isReviewer = allRoles.has('REVIEWER') || allRoles.has('ADMIN') || user?.email?.toLowerCase() === 'admin@admin.com'
+    if (!isReviewer)
+      return { name: 'dashboard' }
+  }
+
+  return true
 })
 
 export default router

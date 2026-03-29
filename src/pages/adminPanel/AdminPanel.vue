@@ -50,6 +50,8 @@ const selectedRequestId = ref("")
 const decisionDrafts = ref<Record<string, string>>({})
 const decisionErrors = ref<Record<string, string>>({})
 const actionError = ref("")
+const reviewNotice = ref("")
+const isSubmittingDecision = ref(false)
 
 onMounted(async () => {
   try {
@@ -81,11 +83,11 @@ const selectedRequest = computed(() =>
 )
 
 const canApproveSelected = computed(() =>
-  selectedRequest.value?.status !== "approved",
+  Boolean(selectedRequest.value) && selectedRequest.value?.status !== "approved",
 )
 
 const canDenySelected = computed(() =>
-  selectedRequest.value?.status !== "denied",
+  Boolean(selectedRequest.value) && selectedRequest.value?.status !== "denied",
 )
 
 watch(
@@ -95,23 +97,11 @@ watch(
       const exists = requests.value.some(request => request.id === requestQuery)
       if (exists) {
         selectedRequestId.value = requestQuery
+        reviewNotice.value = ""
         return
       }
     }
-
-    const fallback = requests.value[0]
-    if (!fallback)
-      return
-
-    selectedRequestId.value = fallback.id
-    if (route.query.request !== fallback.id) {
-      router.replace({
-        query: {
-          ...route.query,
-          request: fallback.id,
-        },
-      })
-    }
+    selectedRequestId.value = ""
   },
   { immediate: true },
 )
@@ -125,14 +115,18 @@ watch(
     }
 
     const selectedStillExists = items.some(request => request.id === selectedRequestId.value)
-    if (!selectedStillExists) {
-      const fallback = items[0]
-      if (fallback)
-        selectedRequestId.value = fallback.id
-    }
+    if (!selectedStillExists)
+      selectedRequestId.value = ""
   },
   { deep: true },
 )
+
+async function closeSelectedRequest() {
+  selectedRequestId.value = ""
+  const query = { ...route.query }
+  delete query.request
+  await router.replace({ query })
+}
 
 async function setDecision(status: "approved" | "denied") {
   const request = selectedRequest.value
@@ -140,6 +134,9 @@ async function setDecision(status: "approved" | "denied") {
     return
 
   if (request.status === status)
+    return
+
+  if (isSubmittingDecision.value)
     return
 
   const reason = (decisionDrafts.value[request.id] ?? request.decisionReason ?? "").trim()
@@ -150,12 +147,18 @@ async function setDecision(status: "approved" | "denied") {
 
   decisionErrors.value[request.id] = ""
 
+  isSubmittingDecision.value = true
   try {
     await updateRequestDecision(request.id, status, reason)
     actionError.value = ""
+    reviewNotice.value = `Request was ${status} successfully. Open another request from the left queue.`
+    await closeSelectedRequest()
   }
   catch {
     actionError.value = "Failed to update decision in backend."
+  }
+  finally {
+    isSubmittingDecision.value = false
   }
 }
 
@@ -207,7 +210,7 @@ function updateDecisionDraft(id: string, value: string) {
 <template>
   <SidebarProvider
     :style="{
-      '--sidebar-width': 'clamp(260px, 24vw, 340px)',
+      '--sidebar-width': 'clamp(320px, 30vw, 440px)',
     }"
   >
     <AppSidebar />
@@ -233,50 +236,65 @@ function updateDecisionDraft(id: string, value: string) {
         </Breadcrumb>
       </header>
 
-      <div class="text-foreground flex flex-1 flex-col gap-6 p-4 lg:p-6">
-        <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          <div class="rounded-xl border bg-card p-4 shadow-xs">
-            <p class="text-muted-foreground text-xs font-medium uppercase tracking-wide">Requests Awaiting Action</p>
-            <p class="mt-2 text-2xl font-semibold">{{ actionableCount }}</p>
-          </div>
-          <div class="rounded-xl border bg-card p-4 shadow-xs">
-            <p class="text-muted-foreground text-xs font-medium uppercase tracking-wide">Appeals To Review</p>
-            <p class="mt-2 text-2xl font-semibold">{{ appealCount }}</p>
-          </div>
-          <div class="rounded-xl border bg-card p-4 shadow-xs">
-            <p class="text-muted-foreground text-xs font-medium uppercase tracking-wide">Approved</p>
-            <p class="mt-2 text-2xl font-semibold">{{ approvedCount }}</p>
-          </div>
-          <div class="rounded-xl border bg-card p-4 shadow-xs">
-            <p class="text-muted-foreground text-xs font-medium uppercase tracking-wide">Denied</p>
-            <p class="mt-2 text-2xl font-semibold">{{ deniedCount }}</p>
+      <div class="text-foreground mx-auto flex w-full max-w-[1600px] flex-1 flex-col gap-6 p-4 lg:p-8">
+        <div class="rounded-2xl border bg-card/80 p-4 shadow-xs lg:p-5">
+          <div class="flex flex-wrap items-start justify-between gap-4">
+            <div>
+              <p class="text-base font-semibold">Moderation Workspace</p>
+              <p class="text-muted-foreground mt-1 text-sm">
+                Pick a request from the left queue, review it, submit decision, then continue with the next one.
+              </p>
+            </div>
+            <div class="grid min-w-[280px] grid-cols-2 gap-2 sm:grid-cols-4">
+              <div class="rounded-lg border bg-background/60 px-3 py-2">
+                <p class="text-muted-foreground text-[11px] uppercase tracking-wide">Awaiting</p>
+                <p class="mt-1 text-xl font-semibold">{{ actionableCount }}</p>
+              </div>
+              <div class="rounded-lg border bg-background/60 px-3 py-2">
+                <p class="text-muted-foreground text-[11px] uppercase tracking-wide">Appeals</p>
+                <p class="mt-1 text-xl font-semibold">{{ appealCount }}</p>
+              </div>
+              <div class="rounded-lg border bg-background/60 px-3 py-2">
+                <p class="text-muted-foreground text-[11px] uppercase tracking-wide">Approved</p>
+                <p class="mt-1 text-xl font-semibold">{{ approvedCount }}</p>
+              </div>
+              <div class="rounded-lg border bg-background/60 px-3 py-2">
+                <p class="text-muted-foreground text-[11px] uppercase tracking-wide">Denied</p>
+                <p class="mt-1 text-xl font-semibold">{{ deniedCount }}</p>
+              </div>
+            </div>
           </div>
         </div>
 
-        <section class="rounded-xl border bg-card shadow-xs">
-            <div v-if="selectedRequest" class="p-4 lg:p-5">
-              <div class="flex flex-wrap items-start justify-between gap-3">
+        <section class="rounded-2xl border bg-card shadow-xs">
+            <div v-if="selectedRequest" class="p-5 lg:p-7">
+              <div class="flex flex-wrap items-start justify-between gap-4">
                 <div>
-                  <p class="text-lg font-semibold">{{ selectedRequest.requestTitle }}</p>
-                  <p class="text-muted-foreground mt-1 text-xs">
+                  <p class="text-2xl font-semibold tracking-tight">{{ selectedRequest.requestTitle }}</p>
+                  <p class="text-muted-foreground mt-1 text-sm">
                     {{ selectedRequest.id }} • submitted {{ selectedRequest.submittedAt }}
                   </p>
                 </div>
-                <Badge :variant="badgeVariant(selectedRequest.status)">
-                  {{ prettyStatus(selectedRequest.status) }}
-                </Badge>
+                <div class="flex items-center gap-2">
+                  <Badge :variant="badgeVariant(selectedRequest.status)">
+                    {{ prettyStatus(selectedRequest.status) }}
+                  </Badge>
+                  <Button variant="outline" size="sm" @click="closeSelectedRequest">
+                    Close
+                  </Button>
+                </div>
               </div>
 
-              <div class="border-border/60 mt-4 border-t pt-4">
+              <div class="border-border/60 mt-6 border-t pt-5">
                 <h3 class="text-sm font-semibold">Request Details</h3>
                 <p class="text-muted-foreground mt-2 text-sm leading-relaxed">
                   {{ selectedRequest.details }}
                 </p>
               </div>
 
-              <div class="border-border/60 mt-4 border-t pt-4">
+              <div class="border-border/60 mt-6 border-t pt-5">
                 <h3 class="text-sm font-semibold">Applicant Information</h3>
-                <div class="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                <div class="mt-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
                   <div>
                     <p class="text-muted-foreground text-[11px] uppercase tracking-wide">Full Name</p>
                     <p class="text-sm font-medium">{{ selectedRequest.requester }}</p>
@@ -300,9 +318,9 @@ function updateDecisionDraft(id: string, value: string) {
                 </div>
               </div>
 
-              <div class="border-border/60 mt-4 border-t pt-4">
+              <div class="border-border/60 mt-6 border-t pt-5">
                 <h3 class="text-sm font-semibold">Contact</h3>
-                <div class="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                <div class="mt-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
                   <div>
                     <p class="text-muted-foreground text-[11px] uppercase tracking-wide">Email</p>
                     <p class="text-sm font-medium">{{ selectedRequest.contactEmail }}</p>
@@ -322,9 +340,10 @@ function updateDecisionDraft(id: string, value: string) {
                 </div>
               </div>
 
-              <div class="border-border/60 mt-4 border-t pt-4">
-                <div class="grid gap-4 lg:grid-cols-[220px_1fr]">
-                  <div>
+              <div class="border-border/60 mt-6 border-t pt-5">
+                <h3 class="text-sm font-semibold">Review Decision</h3>
+                <div class="mt-3 grid gap-4 xl:grid-cols-[220px_1fr]">
+                  <div class="rounded-xl border bg-background/60 p-3">
                     <p class="text-sm font-semibold">Priority Score</p>
                     <p class="text-muted-foreground mt-1 text-xs">1 = low urgency, 5 = highest urgency.</p>
                     <select
@@ -339,31 +358,30 @@ function updateDecisionDraft(id: string, value: string) {
                       <option :value="5">5</option>
                     </select>
                   </div>
-                  <div>
+                  <div class="rounded-xl border bg-background/60 p-3">
                     <div class="mb-1 flex items-center gap-2">
-                      <p class="text-sm font-semibold">Moderator Decision Reason</p>
+                      <p class="text-sm font-semibold">Decision Reason</p>
                       <Badge variant="secondary">Required</Badge>
                     </div>
                     <textarea
                       :value="getDecisionDraft(selectedRequest)"
                       class="border-input bg-background ring-offset-background placeholder:text-muted-foreground focus-visible:ring-ring w-full rounded-md border px-3 py-2 text-sm shadow-xs outline-none focus-visible:ring-1"
-                      rows="4"
+                      rows="5"
                       placeholder="Explain why this request should be approved or denied."
                       @input="updateDecisionDraft(selectedRequest.id, ($event.target as HTMLTextAreaElement).value)"
                     />
                     <p v-if="decisionErrors[selectedRequest.id]" class="text-destructive mt-1 text-xs">
                       {{ decisionErrors[selectedRequest.id] }}
                     </p>
+                    <div class="mt-4 flex flex-wrap items-center gap-2">
+                      <Button size="sm" :disabled="!canApproveSelected || isSubmittingDecision" @click="setDecision('approved')">
+                        Approve Request
+                      </Button>
+                      <Button size="sm" variant="destructive" :disabled="!canDenySelected || isSubmittingDecision" @click="setDecision('denied')">
+                        Deny Request
+                      </Button>
+                    </div>
                   </div>
-                </div>
-
-                <div class="mt-4 flex flex-wrap items-center gap-2">
-                  <Button size="sm" :disabled="!canApproveSelected" @click="setDecision('approved')">
-                    Approve Request
-                  </Button>
-                  <Button size="sm" variant="destructive" :disabled="!canDenySelected" @click="setDecision('denied')">
-                    Deny Request
-                  </Button>
                 </div>
                 <p v-if="actionError" class="text-destructive mt-2 text-xs">
                   {{ actionError }}
@@ -382,8 +400,11 @@ function updateDecisionDraft(id: string, value: string) {
               </div>
             </div>
 
-            <div v-else class="text-muted-foreground px-4 py-10 text-center text-sm lg:px-5">
-              Select a request to open full details.
+            <div v-else class="px-5 py-14 text-center lg:px-7">
+              <p class="text-foreground text-base font-medium">No request is open</p>
+              <p v-if="reviewNotice" class="mt-4 text-sm text-emerald-700">
+                {{ reviewNotice }}
+              </p>
             </div>
         </section>
       </div>

@@ -11,6 +11,7 @@ import expressWinston from "express-winston";
 import mongoose from "mongoose";
 import winston from "winston";
 import { errorHandler } from "./middleware/errorHandler";
+import User from "./models/User";
 import authRouter from "./routes/authRoutes";
 import requestRouter from "./routes/requestRoutes";
 import logger from "./utils/logger";
@@ -35,6 +36,35 @@ mongoose.connection
    });
 
 mongoose.connect(MONGODB_URL);
+
+async function ensureDefaultReviewerUser() {
+   const email = "admin@admin.com";
+   const password = "AdminAdmin";
+
+   const existing = await User.findOne({ email });
+   if (existing) {
+      const hasReviewerRole = (existing.roles ?? []).some(role => role.toUpperCase() === "REVIEWER");
+      if (!hasReviewerRole) {
+         existing.roles = [...new Set([...(existing.roles ?? []), "REVIEWER"])];
+         await existing.save();
+         logger.info("Updated default reviewer role for admin@admin.com");
+      }
+      return;
+   }
+
+   const user = new User({
+      email,
+      fullName: "System Reviewer",
+      roles: ["REVIEWER"],
+   });
+   await user.setPassword(password);
+   await user.save();
+   logger.info("Created default reviewer user admin@admin.com");
+}
+
+mongoose.connection.on("open", () => {
+   void ensureDefaultReviewerUser();
+});
 
 // Enable CORS for all origins
 app.use(cors({

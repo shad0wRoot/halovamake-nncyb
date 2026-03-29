@@ -12,6 +12,7 @@ export interface AppUser {
   name?: string
   email: string
   role?: AppUserRole
+  roles?: string[]
 }
 
 const TOKEN_KEY = "nncyb-auth-token"
@@ -31,6 +32,7 @@ export function setAuthSession(token: string, user: AppUser | null) {
 export function clearAuthSession() {
   localStorage.removeItem(TOKEN_KEY)
   localStorage.removeItem(USER_KEY)
+  localStorage.removeItem(ACTIVE_EMAIL_KEY)
 }
 
 export function getAuthToken() {

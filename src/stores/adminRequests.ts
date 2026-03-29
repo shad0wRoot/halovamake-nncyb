@@ -28,6 +28,7 @@ export interface AdminRequest {
   priorityScore: number
   details: string
   decisionReason?: string
+  reviewer?: string
   appealMessage?: string
 }
 
@@ -100,6 +101,7 @@ function normalizeRequest(raw: Record<string, unknown>): AdminRequest {
     priorityScore: Number(raw.priorityScore ?? raw.priority_score ?? 3),
     details: String(raw.details ?? raw.description ?? ""),
     decisionReason: String(raw.decisionReason ?? raw.decision_reason ?? ""),
+    reviewer: String(raw.reviewer ?? ""),
     appealMessage: String(raw.appealMessage ?? raw.appeal_message ?? ""),
   }
 }

@@ -76,10 +76,18 @@ async function login() {
       email: user.email,
       fullName: user.fullName,
       role: effectiveRole,
+      roles: Array.isArray(user.roles) ? user.roles : (effectiveRole ? [effectiveRole] : []),
     })
     axios.defaults.headers.common.Authorization = `Bearer ${token}`
 
-    if (effectiveRole === 'admin' || effectiveRole === 'ADMIN')
+    const normalizedRoles = new Set(
+      [
+        ...(Array.isArray(user.roles) ? user.roles : []),
+        ...(effectiveRole ? [effectiveRole] : []),
+      ].map(role => role.toUpperCase()),
+    )
+
+    if (normalizedRoles.has('ADMIN') || normalizedRoles.has('REVIEWER'))
       await router.push('/admin')
     else
       await router.push('/dashboard')

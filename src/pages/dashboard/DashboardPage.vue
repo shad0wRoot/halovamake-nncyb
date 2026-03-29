@@ -9,39 +9,49 @@ SPDX-License-Identifier: LicenseRef-SSPL-1.0
 -->
 
 <script setup lang="ts">
+import { computed, onMounted } from "vue"
+import { useAdminRequestsStore } from "@/stores/adminRequests"
+import { getAuthUser } from "@/lib/authSession"
 import ChartAreaInteractive from "@/components/ChartAreaInteractive.vue"
 import DataTable from "@/components/DataTable.vue"
 import SectionCards from "@/components/SectionCards.vue"
 
-const data = [
-  {
-    id: 1,
-    header: "Appeal draft",
-    type: "Narrative",
-    status: "In Process",
-    target: "12",
-    limit: "5",
-    reviewer: "Eddie Lake",
-  },
-  {
-    id: 2,
-    header: "Evidence summary",
-    type: "Technical content",
-    status: "Done",
-    target: "8",
-    limit: "6",
-    reviewer: "Jamik Tashpulatov",
-  },
-  {
-    id: 3,
-    header: "Submission checklist",
-    type: "Checklist",
-    status: "In Process",
-    target: "4",
-    limit: "3",
-    reviewer: "Assign reviewer",
-  },
-]
+const { requests, isLoading, fetchRequests } = useAdminRequestsStore()
+
+const currentUser = getAuthUser()
+
+const userRequests = computed(() =>
+  requests.value.filter(req => req.ownerEmail === currentUser?.email)
+)
+
+const data = computed(() =>
+  userRequests.value.map((req, index) => ({
+    id: index + 1, // DataTable expects number
+    title: req.requestTitle || "Untitled request",
+    companyType: req.companyType || req.role || "Not specified",
+    status: req.status === "approved"
+      ? "Approved"
+      : req.status === "denied"
+        ? "Denied"
+        : req.status === "appealed"
+          ? "Appealed"
+          : req.status === "draft"
+            ? "Draft"
+            : "Pending",
+    priority: String(req.priorityScore ?? 3),
+    submittedAt: req.submittedAt || "N/A",
+    reviewer: req.reviewer || "Not reviewed",
+    decision: req.decisionReason || "No decision yet",
+  }))
+)
+
+onMounted(async () => {
+  try {
+    await fetchRequests()
+  } catch (error) {
+    console.error("Failed to fetch requests:", error)
+  }
+})
 </script>
 
 <template>
@@ -49,5 +59,6 @@ const data = [
   <div class="px-4 lg:px-6">
     <ChartAreaInteractive />
   </div>
-  <DataTable :data="data" />
+  <div v-if="isLoading" class="px-4 lg:px-6 py-4">Loading requests...</div>
+  <DataTable v-else :data="data" />
 </template>

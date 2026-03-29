@@ -13,12 +13,13 @@ import DragHandle from "./DragHandle.vue"
 
 export const schema = z.object({
   id: z.number(),
-  header: z.string(),
-  type: z.string(),
+  title: z.string(),
+  companyType: z.string(),
   status: z.string(),
-  target: z.string(),
-  limit: z.string(),
+  priority: z.string(),
+  submittedAt: z.string(),
   reviewer: z.string(),
+  decision: z.string(),
 })
 </script>
 
@@ -91,12 +92,13 @@ const props = defineProps<{
 
 interface TableData {
   id: number
-  header: string
-  type: string
+  title: string
+  companyType: string
   status: string
-  target: string
-  limit: string
+  priority: string
+  submittedAt: string
   reviewer: string
+  decision: string
 }
 
 const sorting = ref<SortingState>([])
@@ -126,26 +128,27 @@ const columns: ColumnDef<TableData>[] = [
     enableHiding: false,
   },
   {
-    accessorKey: "header",
-    header: "Header",
-    cell: ({ row }) => h("div", { class: "text-foreground" }, String(row.getValue("header"))),
+    accessorKey: "title",
+    header: "Request",
+    cell: ({ row }) => h("div", { class: "text-foreground font-medium" }, String(row.getValue("title"))),
     enableHiding: false,
   },
   {
-    accessorKey: "type",
-    header: "Section Type",
+    accessorKey: "companyType",
+    header: "Company Type",
     cell: ({ row }) => h(Badge, {
       variant: "outline",
       class: "text-foreground",
-    }, () => String(row.getValue("type"))),
+    }, () => String(row.getValue("companyType"))),
   },
   {
     accessorKey: "status",
     header: "Status",
     cell: ({ row }) => {
       const status = row.getValue("status") as string
+      const done = status === "Approved"
       return h("div", { class: "flex items-center gap-2" }, [
-        status === "Done"
+        done
           ? h(IconCircleCheckFilled, { class: "h-4 w-4 text-emerald-500" })
           : h(IconLoader, { class: "h-4 w-4 animate-spin text-muted-foreground" }),
         h("span", {}, status),
@@ -153,41 +156,52 @@ const columns: ColumnDef<TableData>[] = [
     },
   },
   {
-    accessorKey: "target",
+    accessorKey: "priority",
     header: () => h("div", { class: "flex items-center gap-1" }, [
-      "Target",
+      "Priority",
     ]),
     cell: ({ row }) => h(Button, {
       variant: "ghost",
       size: "sm",
       class: "h-auto p-1 text-xs font-mono",
     }, () => [
-      h("span", { class: "ml-1 font-semibold" }, String(row.getValue("target"))),
+      h("span", { class: "ml-1 font-semibold" }, String(row.getValue("priority"))),
     ]),
   },
   {
-    accessorKey: "limit",
+    accessorKey: "submittedAt",
     header: () => h("div", { class: "flex items-center gap-1" }, [
-      "Limit",
+      "Submitted",
     ]),
     cell: ({ row }) => h(Button, {
       variant: "ghost",
       size: "sm",
       class: "h-auto p-1 text-xs font-mono",
     }, () => [
-      h("span", { class: "ml-1 font-semibold" }, String(row.getValue("limit"))),
+      h("span", { class: "ml-1 font-semibold" }, String(row.getValue("submittedAt"))),
     ]),
   },
   {
     accessorKey: "reviewer",
-    header: "Reviewer",
+    header: "Reviewed By",
     cell: ({ row }) => {
       const reviewer = row.getValue("reviewer") as string
-      if (reviewer === "Assign reviewer") {
+      if (reviewer === "Not reviewed") {
         return h("span", { class: "text-muted-foreground" }, "Unassigned")
       }
 
       return h("span", { class: "text-foreground" }, reviewer)
+    },
+  },
+  {
+    accessorKey: "decision",
+    header: "Decision Note",
+    cell: ({ row }) => {
+      const decision = String(row.getValue("decision"))
+      if (!decision || decision === "No decision yet")
+        return h("span", { class: "text-muted-foreground" }, "No decision yet")
+
+      return h("span", { class: "text-foreground line-clamp-2 max-w-[220px]" }, decision)
     },
   },
   {

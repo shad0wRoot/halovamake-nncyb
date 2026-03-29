@@ -13,6 +13,7 @@ import { onMounted, ref } from 'vue'
 import * as z from 'zod'
 
 import { Badge } from '@/components/ui/badge'
+import { toast } from 'vue-sonner'
 import { Button } from '@/components/ui/button'
 import {
   FormControl,
@@ -65,13 +66,15 @@ const form = useForm({
   },
 })
 
-const { createRequest } = useAdminRequestsStore()
+const { createRequest, fetchRequests } = useAdminRequestsStore()
 const submitMessage = ref('')
 const submitError = ref('')
 const draftMessage = ref('')
 
-function saveDraft() {
-  void saveDraftToBackend()
+async function saveDraft() {
+  await saveDraftToBackend()
+  if (!submitError.value)
+    toast.success('Request has been saved as a draft')
 }
 
 async function saveDraftToBackend() {
@@ -151,10 +154,15 @@ const onSubmit = form.handleSubmit(async (values) => {
       details: values.description,
     })
 
+    // Keep UI in sync across dashboard/admin by reloading the store
+    await fetchRequests()
+
     submitMessage.value = 'Request submitted successfully. It is now in the admin queue.'
+    toast.success('Request has been created')
     draftMessage.value = ''
     localStorage.removeItem(DRAFT_KEY)
     form.resetForm()
+    await router.push('/dashboard')
   }
   catch (error) {
     submitError.value = error instanceof Error
@@ -356,7 +364,7 @@ const onSubmit = form.handleSubmit(async (values) => {
 
         <div class="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
           <Button type="button" variant="outline" @click="saveDraft">Save Draft</Button>
-          <router-link to="/dashboard"><Button type="submit">Submit Request</Button></router-link>
+          <Button type="submit">Submit Request</Button>
         </div>
         <p v-if="draftMessage" class="text-sm text-muted-foreground">
           {{ draftMessage }}

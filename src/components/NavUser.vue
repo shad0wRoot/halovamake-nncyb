@@ -14,6 +14,8 @@ import {
   IconUserCircle,
 } from "@tabler/icons-vue"
 import { RouterLink } from "vue-router"
+import { useRouter } from "vue-router"
+import axios from "axios"
 
 import {
   Avatar,
@@ -35,6 +37,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from '@/components/ui/sidebar'
+import { clearAuthSession } from "@/lib/authSession"
 
 interface User {
   name: string
@@ -42,7 +45,7 @@ interface User {
   avatar: string
 }
 
-defineProps<{
+const props = defineProps<{
   user: User
   compact?: boolean
   accountTo?: string
@@ -51,6 +54,7 @@ defineProps<{
 }>()
 
 const { isMobile } = useSidebar()
+const router = useRouter()
 
 function initials(value: string) {
   const cleaned = value.trim()
@@ -62,6 +66,12 @@ function initials(value: string) {
     return (parts[0] ?? '').slice(0, 2).toUpperCase()
 
   return `${parts[0]?.[0] ?? ''}${parts[1]?.[0] ?? ''}`.toUpperCase()
+}
+
+async function logOut() {
+  clearAuthSession()
+  delete axios.defaults.headers.common.Authorization
+  await router.push(props.loginTo ?? "/login")
 }
 </script>
 
@@ -130,11 +140,9 @@ function initials(value: string) {
             </DropdownMenuItem>
           </DropdownMenuGroup>
           <DropdownMenuSeparator />
-          <DropdownMenuItem as-child>
-            <RouterLink :to="loginTo ?? '/login'">
+          <DropdownMenuItem @click="logOut">
               <IconLogout />
               Log out
-            </RouterLink>
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
