@@ -56,14 +56,14 @@ async function login() {
     if (!token)
       throw new Error('Missing auth token in login response.')
 
-    const userFromBody = (response.data as { user?: { email?: string, role?: string, roles?: string[] } }).user
+    const userFromBody = (response.data as { user?: { email?: string, fullName?: string, name?: string, role?: string, roles?: string[] } }).user
     let user = userFromBody ?? null
     if (!user?.email) {
       const meResponse = await axios.get('/api/auth/user', {
         headers: { Authorization: `Bearer ${token}` },
       })
-      user = (meResponse.data as { user?: { email?: string, role?: string, roles?: string[] } }).user
-        ?? (meResponse.data as { email?: string, role?: string, roles?: string[] })
+      user = (meResponse.data as { user?: { email?: string, fullName?: string, name?: string, role?: string, roles?: string[] } }).user
+        ?? (meResponse.data as { email?: string, fullName?: string, name?: string, role?: string, roles?: string[] })
     }
 
     if (!user?.email)
@@ -73,6 +73,8 @@ async function login() {
 
     setAuthSession(token, {
       email: user.email,
+      fullName: user.fullName,
+      name: user.name,
       role: effectiveRole,
     })
     axios.defaults.headers.common.Authorization = `Bearer ${token}`

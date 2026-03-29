@@ -30,7 +30,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from '@/components/ui/sidebar'
-import { getAuthUser } from '@/lib/authSession'
+import { getAuthUser, getDisplayName } from '@/lib/authSession'
 
 const data = {
   navMain: [
@@ -60,7 +60,7 @@ const data = {
 const user = computed(() => {
   const authUser = getAuthUser()
   return {
-    name: authUser?.fullName || authUser?.name || authUser?.email || 'Guest',
+    name: getDisplayName(authUser),
     email: authUser?.email || 'Not signed in',
     avatar: '',
   }
