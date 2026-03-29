@@ -20,11 +20,12 @@ export const createRequestSchema = z.object({
   website: z.string().max(300).optional().default(""),
   details: z.string().min(10).max(3000),
   status: z.enum(["pending", "draft"]).optional().default("pending"),
+  priorityScore: z.number().int().min(1).max(10).optional(),
 });
 
 export const patchRequestSchema = z
   .object({
-    priorityScore: z.number().int().min(1).max(5).optional(),
+    priorityScore: z.number().int().min(1).max(10).optional(),
     status: z.enum(["approved", "denied"]).optional(),
     decisionReason: z.string().max(1000).optional(),
     assignmentAction: z.enum(["take", "release"]).optional(),

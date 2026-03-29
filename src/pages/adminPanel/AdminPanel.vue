@@ -58,15 +58,37 @@ const actionError = ref("")
 const reviewNotice = ref("")
 const isSubmittingDecision = ref(false)
 const isUpdatingAssignment = ref(false)
+const isRefreshing = ref(false)
 
 onMounted(async () => {
   try {
+    if (typeof route.query.request === "string")
+      await closeSelectedRequest()
+
     await fetchRequests()
   }
   catch {
     actionError.value = errorMessage.value || "Failed to load requests from backend."
   }
 })
+
+async function refreshRequests() {
+  if (isRefreshing.value)
+    return
+
+  isRefreshing.value = true
+  try {
+    await fetchRequests()
+    actionError.value = ""
+    reviewNotice.value = "Requests refreshed."
+  }
+  catch {
+    actionError.value = errorMessage.value || "Failed to refresh requests."
+  }
+  finally {
+    isRefreshing.value = false
+  }
+}
 
 const actionableCount = computed(() =>
   requests.value.filter(request => request.status === "pending" || request.status === "appealed").length,
@@ -96,19 +118,28 @@ const canDenySelected = computed(() =>
   Boolean(selectedRequest.value) && selectedRequest.value?.status !== "denied",
 )
 
+function syncSelectedRequestFromRoute(requestQuery: unknown) {
+  if (typeof requestQuery !== "string") {
+    selectedRequestId.value = ""
+    return
+  }
+
+  const exists = requests.value.some(request => request.id === requestQuery)
+  if (exists) {
+    selectedRequestId.value = requestQuery
+    reviewNotice.value = ""
+    return
+  }
+
+  if (requests.value.length === 0)
+    return
+
+  selectedRequestId.value = ""
+}
+
 watch(
   () => route.query.request,
-  (requestQuery) => {
-    if (typeof requestQuery === "string") {
-      const exists = requests.value.some(request => request.id === requestQuery)
-      if (exists) {
-        selectedRequestId.value = requestQuery
-        reviewNotice.value = ""
-        return
-      }
-    }
-    selectedRequestId.value = ""
-  },
+  requestQuery => syncSelectedRequestFromRoute(requestQuery),
   { immediate: true },
 )
 
@@ -119,6 +150,8 @@ watch(
       selectedRequestId.value = ""
       return
     }
+
+    syncSelectedRequestFromRoute(route.query.request)
 
     const selectedStillExists = items.some(request => request.id === selectedRequestId.value)
     if (!selectedStillExists)
@@ -308,6 +341,11 @@ async function toggleAssignment() {
             </BreadcrumbItem>
           </BreadcrumbList>
         </Breadcrumb>
+        <div class="ml-auto">
+          <Button size="sm" variant="outline" :disabled="isRefreshing" @click="refreshRequests">
+            {{ isRefreshing ? "Refreshing..." : "Refresh requests" }}
+          </Button>
+        </div>
       </header>
 
       <div class="text-foreground mx-auto flex w-full max-w-[1500px] min-w-0 flex-1 flex-col gap-6 p-4 lg:p-8">
@@ -436,7 +474,7 @@ async function toggleAssignment() {
                 <div class="mt-3 grid gap-4 xl:grid-cols-[220px_1fr]">
                   <div class="rounded-xl border bg-background/60 p-3">
                     <p class="text-sm font-semibold">Priority Score</p>
-                    <p class="text-muted-foreground mt-1 text-xs">1 = low urgency, 5 = highest urgency.</p>
+                    <p class="text-muted-foreground mt-1 text-xs">1 = highest priority, 10 = lowest priority.</p>
                     <select
                       :value="selectedRequest.priorityScore"
                       class="border-input bg-background ring-offset-background focus-visible:border-ring focus-visible:ring-ring/50 mt-2 h-9 w-full rounded-md border px-2 text-sm outline-none focus-visible:ring-[3px]"
@@ -447,6 +485,11 @@ async function toggleAssignment() {
                       <option :value="3">3</option>
                       <option :value="4">4</option>
                       <option :value="5">5</option>
+                      <option :value="6">6</option>
+                      <option :value="7">7</option>
+                      <option :value="8">8</option>
+                      <option :value="9">9</option>
+                      <option :value="10">10</option>
                     </select>
                   </div>
                   <div class="rounded-xl border bg-background/60 p-3">

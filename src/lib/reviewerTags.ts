@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: LicenseRef-SSPL-1.0
 
 import type { AdminRequest } from "@/stores/adminRequests"
+import { inferRequestRole, normalizeRoleValue } from "@/lib/requestClassification"
 
 const STORAGE_PREFIX = "nncyb-reviewer-tags"
 
@@ -18,18 +19,17 @@ export const DEFAULT_REVIEW_TAGS = [
 ]
 
 export function normalizeTag(tag: string) {
-  return String(tag || "")
-    .trim()
-    .toLowerCase()
-    .replace(/\s+/g, "-")
+  return normalizeRoleValue(tag)
 }
 
 export function requestTag(request: AdminRequest) {
-  const primary = normalizeTag(request.role)
-  if (primary && primary !== "unknown")
-    return primary
-
-  return "other"
+  return inferRequestRole(
+    request.role,
+    request.companyType,
+    request.requestTitle,
+    request.details,
+    request.companyName,
+  )
 }
 
 export function tagLabel(tag: string) {

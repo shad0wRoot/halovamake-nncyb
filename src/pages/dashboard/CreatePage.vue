@@ -24,6 +24,13 @@ import {
   FormMessage,
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { getActiveEmail } from '@/lib/authSession'
 import { useAdminRequestsStore } from '@/stores/adminRequests'
 import router from '@/router'
@@ -291,27 +298,28 @@ const onSubmit = form.handleSubmit(async (values) => {
               </FormItem>
             </FormField>
 
-            <FormField v-slot="{ componentField }" name="role">
+            <FormField v-slot="{ value, handleChange }" name="role">
               <FormItem class="md:col-span-2">
                 <div class="mb-1 flex items-center gap-2">
                   <FormLabel>Role</FormLabel>
                   <Badge variant="secondary">Required</Badge>
                 </div>
                 <FormControl>
-                  <select
-                    class="border-input bg-transparent ring-offset-background focus-visible:ring-ring flex h-9 w-full rounded-md border px-3 py-1 text-sm shadow-xs outline-none focus-visible:ring-1"
-                    v-bind="componentField"
-                  >
-                    <option value="" hidden>Select role</option>
-                    <option value="investor-lp">Investor LP</option>
-                    <option value="investor-gp">Investor GP</option>
-                    <option value="government">Government</option>
-                    <option value="media">Media</option>
-                    <option value="freelancer">Freelancer</option>
-                    <option value="startup">Startup</option>
-                    <option value="portfolio-startup">Portfolio Startup</option>
-                    <option value="other">Other</option>
-                  </select>
+                  <Select :model-value="String(value || '')" @update:model-value="handleChange">
+                    <SelectTrigger class="w-full">
+                      <SelectValue placeholder="Select role" />
+                    </SelectTrigger>
+                    <SelectContent class="max-h-60 bg-background text-foreground">
+                      <SelectItem value="investor-lp">Investor LP</SelectItem>
+                      <SelectItem value="investor-gp">Investor GP</SelectItem>
+                      <SelectItem value="government">Government</SelectItem>
+                      <SelectItem value="media">Media</SelectItem>
+                      <SelectItem value="freelancer">Freelancer</SelectItem>
+                      <SelectItem value="startup">Startup</SelectItem>
+                      <SelectItem value="portfolio-startup">Portfolio Startup</SelectItem>
+                      <SelectItem value="other">Other</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </FormControl>
                 <FormMessage />
               </FormItem>

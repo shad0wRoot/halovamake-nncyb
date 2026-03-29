@@ -13,6 +13,30 @@ import User from "../models/User";
 
 const router = express.Router();
 
+function derivePriorityScore(...values: Array<string | undefined>) {
+  const haystack = values
+    .map(value => String(value || "").trim().toLowerCase())
+    .filter(Boolean)
+    .join(" ");
+
+  if (/\bgovernment\b|\bgov\b|\bgovt\b|\bministry\b|\bpublic sector\b|\bstate\b/.test(haystack))
+    return 1;
+  if (/\bportfolio[-\s]startup\b|\bportfolio company\b/.test(haystack))
+    return 2;
+  if (/\bstartup\b/.test(haystack))
+    return 3;
+  if (/\binvestor[-\s]lp\b|\blimited partner\b|\blp\b/.test(haystack))
+    return 4;
+  if (/\binvestor[-\s]gp\b|\bgeneral partner\b|\bgp\b/.test(haystack))
+    return 5;
+  if (/\bmedia\b|\bpress\b|\bjournalis[tm]\b|\bnews(room)?\b|\bpublication\b/.test(haystack))
+    return 6;
+  if (/\bfreelancer\b|\bcontractor\b|\bindependent\b/.test(haystack))
+    return 7;
+
+  return 10;
+}
+
 function hasReviewerRole(authUser: NonNullable<AuthenticatedRequest["authUser"]>) {
   const roles = authUser.roles ?? [];
   return roles.some(role => {
@@ -130,6 +154,7 @@ router.post("/", requireAuth, validate(createRequestSchema), async (req: Authent
     website?: string;
     details: string;
     status?: "pending" | "draft";
+    priorityScore?: number;
   };
 
   const ownerEmail = payload.ownerEmail || authUser.email;
@@ -144,7 +169,13 @@ router.post("/", requireAuth, validate(createRequestSchema), async (req: Authent
     company: payload.companyName || "",
     companyType: payload.companyType || payload.role || "",
     companyAddress: payload.companyLocation || "",
-    priority: 3,
+    priority: payload.priorityScore ?? derivePriorityScore(
+      payload.role,
+      payload.companyType,
+      payload.requestTitle,
+      payload.details,
+      payload.companyName,
+    ),
     linkedIn: payload.contactLinkedIn || "",
     website: payload.website || "",
     reviewer: "",

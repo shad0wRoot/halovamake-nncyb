@@ -7,6 +7,7 @@
 import axios from "axios"
 import { ref } from "vue"
 import { getAuthToken } from "@/lib/authSession"
+import { derivePriorityScore, inferRequestRole } from "@/lib/requestClassification"
 
 export type DecisionState = "draft" | "pending" | "approved" | "denied" | "appealed"
 
@@ -48,6 +49,7 @@ interface CreateAdminRequestInput {
   website?: string
   details: string
   status?: "pending" | "draft"
+  priorityScore?: number
 }
 
 interface UpdateRequestBody {
@@ -86,12 +88,20 @@ function extractErrorMessage(error: unknown) {
 }
 
 function normalizeRequest(raw: Record<string, unknown>): AdminRequest {
+  const role = inferRequestRole(
+    String(raw.role ?? ""),
+    String(raw.companyType ?? raw.company_type ?? ""),
+    String(raw.requestTitle ?? raw.request_title ?? ""),
+    String(raw.details ?? raw.description ?? ""),
+    String(raw.companyName ?? raw.company_name ?? ""),
+  )
+
   return {
     id: String(raw.id ?? raw._id ?? ""),
     ownerEmail: String(raw.ownerEmail ?? raw.owner_email ?? raw.contactEmail ?? ""),
     requestTitle: String(raw.requestTitle ?? raw.request_title ?? "Untitled request"),
     requester: String(raw.requester ?? raw.fullName ?? "Unknown"),
-    role: String(raw.role ?? "Unknown"),
+    role,
     companyName: String(raw.companyName ?? raw.company_name ?? "Not provided"),
     companyLocation: String(raw.companyLocation ?? raw.company_location ?? "Not provided"),
     companyType: String(raw.companyType ?? raw.company_type ?? "Not provided"),
@@ -101,7 +111,12 @@ function normalizeRequest(raw: Record<string, unknown>): AdminRequest {
     website: String(raw.website ?? ""),
     submittedAt: String(raw.submittedAt ?? raw.submitted_at ?? new Date().toISOString().slice(0, 10)),
     status: String(raw.status ?? "pending") as DecisionState,
-    priorityScore: Number(raw.priorityScore ?? raw.priority_score ?? 3),
+    priorityScore: Number(raw.priorityScore ?? raw.priority_score ?? derivePriorityScore(
+      role,
+      String(raw.companyType ?? raw.company_type ?? ""),
+      String(raw.requestTitle ?? raw.request_title ?? ""),
+      String(raw.details ?? raw.description ?? ""),
+    )),
     details: String(raw.details ?? raw.description ?? ""),
     decisionReason: String(raw.decisionReason ?? raw.decision_reason ?? ""),
     reviewer: String(raw.reviewer ?? ""),
@@ -145,6 +160,13 @@ export async function fetchRequests() {
 }
 
 export async function createRequest(input: CreateAdminRequestInput) {
+  const priorityScore = input.priorityScore ?? derivePriorityScore(
+    input.role,
+    input.companyType,
+    input.requestTitle,
+    input.details,
+    input.companyName,
+  )
   const payload = {
     ownerEmail: input.ownerEmail,
     requestTitle: input.requestTitle,
@@ -159,6 +181,7 @@ export async function createRequest(input: CreateAdminRequestInput) {
     website: input.website,
     details: input.details,
     status: input.status ?? "pending",
+    priorityScore,
   }
 
   try {

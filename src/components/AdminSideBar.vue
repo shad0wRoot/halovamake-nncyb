@@ -10,7 +10,7 @@ SPDX-License-Identifier: LicenseRef-SSPL-1.0
 import type { SidebarProps } from "@/components/ui/sidebar"
 import { AlertTriangle, CheckCheck, Command, ListChecks } from "lucide-vue-next"
 import { computed, h, onMounted, ref, watch } from "vue"
-import { RouterLink } from "vue-router"
+import { RouterLink, useRoute } from "vue-router"
 import NavUser from "@/components/NavUser.vue"
 import { getAuthUser, getDisplayName } from "@/lib/authSession"
 import { collectAvailableTags, getReviewerSelectedTags, requestTag, saveReviewerSelectedTags, tagLabel } from "@/lib/reviewerTags"
@@ -35,6 +35,7 @@ import { Switch } from "@/components/ui/switch"
 const props = withDefaults(defineProps<SidebarProps>(), {
   collapsible: "icon",
 })
+const route = useRoute()
 
 type QueueState = "pending" | "appealed" | "approved" | "denied" | "draft"
 
@@ -80,7 +81,7 @@ const activeItem = ref(data.navMain[0])
 const onlyHighPriority = ref(false)
 const queueSearch = ref("")
 const selectedTags = ref<string[]>([])
-const { setOpen } = useSidebar()
+const { setOpen, state } = useSidebar()
 const { requests, fetchRequests, isLoaded, errorMessage } = useAdminRequestsStore()
 const loadError = ref("")
 const reviewerEmail = computed(() => getAuthUser()?.email?.toLowerCase() || "")
@@ -123,7 +124,7 @@ const visibleRequests = computed(() => {
   })
 
   if (onlyHighPriority.value)
-    result = result.filter((request) => request.priorityScore >= 4)
+    result = result.filter((request) => request.priorityScore <= 3)
 
   const needle = queueSearch.value.trim().toLowerCase()
   if (needle) {
@@ -134,7 +135,12 @@ const visibleRequests = computed(() => {
     )
   }
 
-  return result
+  return [...result].sort((left, right) => {
+    if (left.priorityScore !== right.priorityScore)
+      return left.priorityScore - right.priorityScore
+
+    return right.submittedAt.localeCompare(left.submittedAt)
+  })
 })
 
 function statusClass(status: QueueState) {
@@ -148,7 +154,7 @@ function statusClass(status: QueueState) {
 }
 
 function priorityLabel(priorityScore: number) {
-  return `${priorityScore}/5`
+  return String(priorityScore)
 }
 </script>
 
@@ -217,7 +223,10 @@ function priorityLabel(priorityScore: number) {
     <!--  We disable collapsible and let it fill remaining space -->
     <Sidebar
       collapsible="none"
-      class="hidden w-[calc(var(--sidebar-width)-var(--sidebar-width-icon)-1px)] shrink-0 border-r md:flex"
+      class="hidden border-r transition-[width,opacity,border-color] duration-200 ease-linear md:flex"
+      :class="state === 'collapsed'
+        ? 'w-0 min-w-0 border-r-0 opacity-0 pointer-events-none'
+        : 'w-[calc(var(--sidebar-width)-var(--sidebar-width-icon)-1px)] shrink-0 opacity-100'"
     >
       <SidebarHeader class="gap-3.5 border-b p-4">
         <div class="flex w-full items-center justify-between">
@@ -251,7 +260,8 @@ function priorityLabel(priorityScore: number) {
               v-for="request in visibleRequests"
               :key="request.id"
               :to="{ path: '/admin', query: { request: request.id } }"
-              class="hover:bg-sidebar-accent hover:text-sidebar-accent-foreground text-foreground flex w-full flex-col items-start gap-2 border-b p-4 text-sm leading-tight last:border-b-0"
+              class="text-foreground flex w-full flex-col items-start gap-2 border-b p-4 text-sm leading-tight transition-colors last:border-b-0 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+              :class="route.query.request === request.id ? 'bg-sidebar-accent text-sidebar-accent-foreground' : ''"
             >
               <div class="flex w-full items-center gap-2">
                 <span class="max-w-[170px] truncate font-medium lg:max-w-[210px]">{{ request.requester }}</span>
@@ -268,10 +278,13 @@ function priorityLabel(priorityScore: number) {
               </div>
               <div
                 v-if="request.activeReviewerEmail"
-                class="text-xs font-medium text-amber-700"
+                class="inline-flex max-w-full items-center gap-1.5 rounded-md border border-sky-500/20 bg-sky-500/10 px-2 py-1 text-[11px] font-medium text-sky-700 dark:border-sky-400/20 dark:bg-sky-400/10 dark:text-sky-300"
                 :title="request.activeReviewerEmail"
               >
-                Taken by {{ request.activeReviewerName || request.activeReviewerEmail }}
+                <span class="h-1.5 w-1.5 rounded-full bg-sky-500 dark:bg-sky-300" />
+                <span class="truncate">
+                  Assigned to {{ request.activeReviewerName || request.activeReviewerEmail }}
+                </span>
               </div>
               <span class="text-muted-foreground line-clamp-2 w-full whitespace-break-spaces text-xs">
                 {{ request.details }}
