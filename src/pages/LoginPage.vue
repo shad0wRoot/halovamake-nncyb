@@ -11,7 +11,8 @@ export const description = "A login page with a muted background color."
 </script>
 
 <script setup lang="ts">
-import LoginForm from "@/views/LoginView.vue"
+import '@/assets/main.css';
+import LoginForm from "@/views/LoginView.vue";
 </script>
 
 <template>

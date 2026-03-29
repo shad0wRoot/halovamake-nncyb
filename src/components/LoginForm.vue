@@ -7,8 +7,7 @@ SPDX-License-Identifier: LicenseRef-SSPL-1.0
 -->
 
 <script setup lang="ts">
-import type { HTMLAttributes } from "vue"
-import { cn } from "@/lib/utils"
+import '@/assets/main.css'
 import { Button } from '@/components/ui/button/'
 import {
   Card,
@@ -21,10 +20,11 @@ import {
   Field,
   FieldDescription,
   FieldGroup,
-  FieldLabel,
-  FieldSeparator,
+  FieldLabel
 } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
+import { cn } from "@/lib/utils"
+import type { HTMLAttributes } from "vue"
 
 const props = defineProps<{
   class?: HTMLAttributes["class"]
@@ -49,22 +49,14 @@ const props = defineProps<{
               <FieldLabel for="email">
                 Email
               </FieldLabel>
-              <Input
-                id="email"
-                type="email"
-                placeholder="socmajster@binaryconfidance.com"
-                required
-              />
+              <Input id="email" type="email" placeholder="socmajster@binaryconfidance.com" required />
             </Field>
             <Field>
-              <div class="flex items-center">
+              <div class="flex items-center justify-between">
                 <FieldLabel for="password">
                   Password
                 </FieldLabel>
-                <a
-                  href="#"
-                  class="ml-auto text-sm underline-offset-4 hover:underline"
-                >
+                <a href="#" class="ml-auto text-sm underline-offset-4 hover:underline">
                   Forgot your password?
                 </a>
               </div>
