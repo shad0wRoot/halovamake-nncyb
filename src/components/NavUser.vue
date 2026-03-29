@@ -59,7 +59,7 @@ const { isMobile } = useSidebar()
       <DropdownMenu>
         <DropdownMenuTrigger as-child>
           <SidebarMenuButton
-            :size="compact ? 'icon' : 'lg'"
+            :size="compact ? 'sm' : 'lg'"
             :class="[
               'data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground',
               compact ? 'justify-center p-0' : '',
