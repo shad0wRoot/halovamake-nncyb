@@ -11,8 +11,9 @@ export const description = "A login page with a muted background color."
 </script>
 
 <script setup lang="ts">
-import { GalleryVerticalEnd } from "lucide-vue-next"
-import LoginForm from "@/views/LoginView.vue"
+import '@/assets/main.css';
+import LoginForm from "@/views/LoginView.vue";
+import { GalleryVerticalEnd } from "lucide-vue-next";
 </script>
 
 <template>

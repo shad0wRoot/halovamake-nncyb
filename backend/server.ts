@@ -1,4 +1,5 @@
 import { configDotenv } from "dotenv";
+import cors from "cors";
 import express from "express";
 import expressWinston from "express-winston";
 import mongoose from "mongoose";
@@ -22,6 +23,14 @@ mongoose.connection
    });
 
 mongoose.connect(MONGODB_URL);
+
+// Enable CORS for all origins
+app.use(cors({
+   origin: "*",
+   credentials: true,
+   methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+   allowedHeaders: ["Content-Type", "Authorization"]
+}));
 
 app.use(
    expressWinston.logger({
