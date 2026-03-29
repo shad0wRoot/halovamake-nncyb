@@ -4,12 +4,15 @@
 //
 // SPDX-License-Identifier: LicenseRef-SSPL-1.0
 
+import axios from "axios"
 import { ref } from "vue"
+import { getAuthToken } from "@/lib/authSession"
 
 export type DecisionState = "pending" | "approved" | "denied" | "appealed"
 
 export interface AdminRequest {
   id: string
+  ownerEmail: string
   requestTitle: string
   requester: string
   role: string
@@ -28,92 +31,166 @@ export interface AdminRequest {
   appealMessage?: string
 }
 
-const requests = ref<AdminRequest[]>([
-  {
-    id: "REQ-1001",
-    requestTitle: "Tuition Refund Appeal",
-    requester: "Arietta Cruz",
-    role: "Student",
-    companyName: "North Hall Cohort",
-    companyLocation: "Bratislava, Slovakia",
-    companyType: "Education",
-    contactEmail: "arietta.cruz@example.com",
-    contactPhone: "+421 900 111 220",
-    contactLinkedIn: "https://linkedin.com/in/ariettacruz",
-    submittedAt: "2026-03-28",
-    status: "pending",
-    priorityScore: 4,
-    details: "Duplicate billing charge for spring term tuition.",
-  },
-  {
-    id: "REQ-1002",
-    requestTitle: "Extension Request",
-    requester: "Noah Bennett",
-    role: "Freelancer",
-    companyName: "Independent",
-    companyLocation: "Kosice, Slovakia",
-    companyType: "Sole Proprietor",
-    contactEmail: "noah.bennett@example.com",
-    contactPhone: "+421 900 442 771",
-    website: "https://noah-bennett.dev",
-    submittedAt: "2026-03-28",
-    status: "pending",
-    priorityScore: 3,
-    details: "Requested 7 extra days to provide dependent documentation.",
-  },
-  {
-    id: "REQ-1003",
-    requestTitle: "Denied Housing Exception",
-    requester: "Kelsie Hart",
-    role: "Startup",
-    companyName: "Cedar Labs",
-    companyLocation: "Presov, Slovakia",
-    companyType: "Technology Startup",
-    contactEmail: "kelsie.hart@cedarlabs.io",
-    contactPhone: "+421 901 100 991",
-    website: "https://cedarlabs.io",
-    submittedAt: "2026-03-27",
-    status: "appealed",
-    priorityScore: 5,
-    details: "Initial request denied for missing financial statement.",
-    decisionReason: "Missing signed statement proving temporary displacement.",
-    appealMessage: "Appeal submitted with notarized hardship letter and updated statements.",
-  },
-  {
-    id: "REQ-1004",
-    requestTitle: "Program Transfer",
-    requester: "Minseo Park",
-    role: "Portfolio Startup",
-    companyName: "Atlas Growth",
-    companyLocation: "Brno, Czechia",
-    companyType: "VC Portfolio",
-    contactEmail: "minseo.park@atlasgrowth.io",
-    contactPhone: "+420 774 220 301",
-    website: "https://atlasgrowth.io",
-    submittedAt: "2026-03-26",
-    status: "approved",
-    priorityScore: 2,
-    details: "Advisor and department approvals complete.",
-    decisionReason: "All required endorsements and transfer documents were valid.",
-  },
-  {
-    id: "REQ-1005",
-    requestTitle: "Emergency Fee Waiver",
-    requester: "Elijah Reed",
-    role: "Other",
-    companyName: "Community Applicant",
-    companyLocation: "Nitra, Slovakia",
-    companyType: "Nonprofit",
-    contactEmail: "elijah.reed@example.org",
-    contactPhone: "+421 902 551 888",
-    submittedAt: "2026-03-25",
-    status: "denied",
-    priorityScore: 4,
-    details: "Denied due to incomplete hardship evidence.",
-    decisionReason: "No official medical or financial proof was attached.",
-  },
-])
+interface CreateAdminRequestInput {
+  ownerEmail: string
+  requestTitle: string
+  requester: string
+  role: string
+  companyName: string
+  companyLocation: string
+  companyType: string
+  contactEmail: string
+  contactPhone: string
+  contactLinkedIn?: string
+  website?: string
+  details: string
+}
+
+interface UpdateRequestBody {
+  priorityScore?: number
+  status?: "approved" | "denied"
+  decisionReason?: string
+}
+
+const requests = ref<AdminRequest[]>([])
+const isLoading = ref(false)
+const isLoaded = ref(false)
+const errorMessage = ref("")
+
+function authHeaders() {
+  const token = getAuthToken()
+  if (!token)
+    throw new Error("You are not logged in. Please sign in and try again.")
+
+  return {
+    Authorization: `Bearer ${token}`,
+  }
+}
+
+function extractErrorMessage(error: unknown) {
+  if (axios.isAxiosError(error)) {
+    const fromResponse = error.response?.data as { message?: string } | undefined
+    if (fromResponse?.message)
+      return fromResponse.message
+  }
+
+  if (error instanceof Error)
+    return error.message
+
+  return "Unexpected request error"
+}
+
+function normalizeRequest(raw: Record<string, unknown>): AdminRequest {
+  return {
+    id: String(raw.id ?? raw._id ?? ""),
+    ownerEmail: String(raw.ownerEmail ?? raw.owner_email ?? raw.contactEmail ?? ""),
+    requestTitle: String(raw.requestTitle ?? raw.request_title ?? "Untitled request"),
+    requester: String(raw.requester ?? raw.fullName ?? "Unknown"),
+    role: String(raw.role ?? "Unknown"),
+    companyName: String(raw.companyName ?? raw.company_name ?? "Not provided"),
+    companyLocation: String(raw.companyLocation ?? raw.company_location ?? "Not provided"),
+    companyType: String(raw.companyType ?? raw.company_type ?? "Not provided"),
+    contactEmail: String(raw.contactEmail ?? raw.contact_email ?? ""),
+    contactPhone: String(raw.contactPhone ?? raw.contact_phone ?? "Not provided"),
+    contactLinkedIn: String(raw.contactLinkedIn ?? raw.contact_linkedin ?? ""),
+    website: String(raw.website ?? ""),
+    submittedAt: String(raw.submittedAt ?? raw.submitted_at ?? new Date().toISOString().slice(0, 10)),
+    status: String(raw.status ?? "pending") as DecisionState,
+    priorityScore: Number(raw.priorityScore ?? raw.priority_score ?? 3),
+    details: String(raw.details ?? raw.description ?? ""),
+    decisionReason: String(raw.decisionReason ?? raw.decision_reason ?? ""),
+    appealMessage: String(raw.appealMessage ?? raw.appeal_message ?? ""),
+  }
+}
+
+function mapListResponse(payload: unknown): AdminRequest[] {
+  if (Array.isArray(payload))
+    return payload.map(item => normalizeRequest(item as Record<string, unknown>))
+
+  if (payload && typeof payload === "object") {
+    const list = (payload as { data?: unknown }).data
+    if (Array.isArray(list))
+      return list.map(item => normalizeRequest(item as Record<string, unknown>))
+  }
+
+  return []
+}
+
+export async function fetchRequests() {
+  isLoading.value = true
+  errorMessage.value = ""
+
+  try {
+    const response = await axios.get("/api/requests", {
+      headers: authHeaders(),
+    })
+    requests.value = mapListResponse(response.data)
+    isLoaded.value = true
+  }
+  catch (error) {
+    errorMessage.value = extractErrorMessage(error)
+    throw error
+  }
+  finally {
+    isLoading.value = false
+  }
+}
+
+export async function createRequest(input: CreateAdminRequestInput) {
+  const payload = {
+    ownerEmail: input.ownerEmail,
+    requestTitle: input.requestTitle,
+    requester: input.requester,
+    role: input.role,
+    companyName: input.companyName,
+    companyLocation: input.companyLocation,
+    companyType: input.companyType,
+    contactEmail: input.contactEmail,
+    contactPhone: input.contactPhone,
+    contactLinkedIn: input.contactLinkedIn,
+    website: input.website,
+    details: input.details,
+  }
+
+  const response = await axios.post("/api/requests", payload, {
+    headers: authHeaders(),
+  })
+  const created = normalizeRequest((response.data as { data?: Record<string, unknown> }).data ?? (response.data as Record<string, unknown>))
+
+  requests.value = [created, ...requests.value]
+  return created
+}
+
+async function patchRequest(id: string, body: UpdateRequestBody) {
+  const response = await axios.patch(`/api/requests/${id}`, body, {
+    headers: authHeaders(),
+  })
+  const updated = normalizeRequest((response.data as { data?: Record<string, unknown> }).data ?? (response.data as Record<string, unknown>))
+
+  requests.value = requests.value.map((request) => {
+    if (request.id !== id)
+      return request
+    return updated
+  })
+}
+
+export async function updateRequestPriority(id: string, priorityScore: number) {
+  await patchRequest(id, { priorityScore })
+}
+
+export async function updateRequestDecision(id: string, status: "approved" | "denied", decisionReason: string) {
+  await patchRequest(id, { status, decisionReason })
+}
 
 export function useAdminRequestsStore() {
-  return { requests }
+  return {
+    requests,
+    isLoading,
+    isLoaded,
+    errorMessage,
+    fetchRequests,
+    createRequest,
+    updateRequestDecision,
+    updateRequestPriority,
+  }
 }

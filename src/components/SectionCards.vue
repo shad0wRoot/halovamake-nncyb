@@ -7,17 +7,46 @@ SPDX-License-Identifier: LicenseRef-SSPL-1.0
 -->
 
 <script setup lang="ts">
-import { IconTrendingDown, IconTrendingUp } from "@tabler/icons-vue"
+import { computed, onMounted } from "vue"
 
-import { Badge } from '@/components/ui/badge'
 import {
   Card,
-  CardAction,
   CardDescription,
   CardFooter,
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
+import { getActiveEmail } from '@/lib/authSession'
+import { useAdminRequestsStore } from '@/stores/adminRequests'
+
+const { requests, fetchRequests, isLoaded } = useAdminRequestsStore()
+
+onMounted(async () => {
+  if (!isLoaded.value)
+    await fetchRequests()
+})
+
+const currentUserEmail = computed(() =>
+  getActiveEmail(),
+)
+
+const userRequests = computed(() =>
+  requests.value.filter(request => request.ownerEmail.toLowerCase() === currentUserEmail.value),
+)
+
+const totalRequests = computed(() => userRequests.value.length)
+const acceptedRequests = computed(() =>
+  userRequests.value.filter(request => request.status === "approved").length,
+)
+const pendingRequests = computed(() =>
+  userRequests.value.filter(request => request.status === "pending" || request.status === "appealed").length,
+)
+
+const acceptanceRate = computed(() => {
+  if (!totalRequests.value)
+    return 0
+  return Math.round((acceptedRequests.value / totalRequests.value) * 100)
+})
 </script>
 
 <template>
@@ -26,12 +55,12 @@ import {
       <CardHeader>
         <CardDescription>Requests Sent</CardDescription>
         <CardTitle class="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
-          no. of requests
+          {{ totalRequests }}
         </CardTitle>
       </CardHeader>
       <CardFooter class="flex-col items-start gap-1.5 text-sm">
         <div class="text-muted-foreground">
-          Total Amount of Requests Sent
+          Total requests submitted in your workspace
         </div>
       </CardFooter>
     </Card>
@@ -39,12 +68,12 @@ import {
       <CardHeader>
         <CardDescription>Requests Accepted</CardDescription>
         <CardTitle class="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
-          no. of accepted requests
+          {{ acceptedRequests }}
         </CardTitle>
       </CardHeader>
       <CardFooter class="flex-col items-start gap-1.5 text-sm">
         <div class="text-muted-foreground">
-          Total Amount of Accepted Requests
+          Acceptance rate: {{ acceptanceRate }}%
         </div>
       </CardFooter>
     </Card>
@@ -52,12 +81,12 @@ import {
       <CardHeader>
         <CardDescription>Waiting for Review</CardDescription>
         <CardTitle class="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
-          no. of pending requests
+          {{ pendingRequests }}
         </CardTitle>
       </CardHeader>
       <CardFooter class="flex-col items-start gap-1.5 text-sm">
         <div class="text-muted-foreground">
-          Total Amount of Pending Requests
+          Pending includes appealed requests awaiting action
         </div>
       </CardFooter>
     </Card>

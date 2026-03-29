@@ -12,6 +12,7 @@ import mongoose from "mongoose";
 import winston from "winston";
 import { errorHandler } from "./middleware/errorHandler";
 import authRouter from "./routes/authRoutes";
+import requestRouter from "./routes/requestRoutes";
 import logger from "./utils/logger";
 import requireEnv from "./utils/requireEnv";
 
@@ -68,6 +69,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 app.use("/api/auth", authRouter);
+app.use("/api/requests", requestRouter);
 
 app.get("/", function (req, res) {
    res.send("hello, world!" + process.env.TESTVAR);

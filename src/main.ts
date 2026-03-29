@@ -12,7 +12,7 @@ import { createApp } from "vue";
 import VueAxios from "vue-axios";
 
 import App from "./App.vue";
-import auth from "./auth";
+import { getAuthToken } from "./lib/authSession";
 import router from "./router";
 
 axios.defaults.baseURL = "http://localhost:8081"; // set your API base URL
@@ -40,11 +40,14 @@ function applyInitialTheme() {
 
 applyInitialTheme()
 
+const token = getAuthToken()
+if (token)
+	axios.defaults.headers.common.Authorization = `Bearer ${token}`
+
 const app = createApp(App);
 
 app.use(createPinia());
 app.use(router);
-app.use(VueAxios, axios); // must be before auth
-app.use(auth);
+app.use(VueAxios, axios);
 
 app.mount("#app");

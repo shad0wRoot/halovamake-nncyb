@@ -12,7 +12,7 @@ export const iframeHeight = "900px"
 </script>
 
 <script setup lang="ts">
-import { computed, ref, watch } from "vue"
+import { computed, onMounted, ref, watch } from "vue"
 import { useRoute, useRouter } from "vue-router"
 import AppSidebar from "@/components/AdminSideBar.vue"
 import { useAdminRequestsStore } from "@/stores/adminRequests"
@@ -38,11 +38,27 @@ import type { AdminRequest, DecisionState } from "@/stores/adminRequests"
 const route = useRoute()
 const router = useRouter()
 
-const { requests } = useAdminRequestsStore()
+const {
+  requests,
+  fetchRequests,
+  updateRequestDecision,
+  updateRequestPriority,
+  errorMessage,
+} = useAdminRequestsStore()
 
 const selectedRequestId = ref("")
 const decisionDrafts = ref<Record<string, string>>({})
 const decisionErrors = ref<Record<string, string>>({})
+const actionError = ref("")
+
+onMounted(async () => {
+  try {
+    await fetchRequests()
+  }
+  catch {
+    actionError.value = errorMessage.value || "Failed to load requests from backend."
+  }
+})
 
 const actionableCount = computed(() =>
   requests.value.filter(request => request.status === "pending" || request.status === "appealed").length,
@@ -118,7 +134,7 @@ watch(
   { deep: true },
 )
 
-function setDecision(status: "approved" | "denied") {
+async function setDecision(status: "approved" | "denied") {
   const request = selectedRequest.value
   if (!request)
     return
@@ -134,32 +150,27 @@ function setDecision(status: "approved" | "denied") {
 
   decisionErrors.value[request.id] = ""
 
-  requests.value = requests.value.map((item) => {
-    if (item.id !== request.id)
-      return item
-
-    return {
-      ...item,
-      status,
-      decisionReason: reason,
-    }
-  })
+  try {
+    await updateRequestDecision(request.id, status, reason)
+    actionError.value = ""
+  }
+  catch {
+    actionError.value = "Failed to update decision in backend."
+  }
 }
 
-function setPriority(value: number) {
+async function setPriority(value: number) {
   const request = selectedRequest.value
   if (!request)
     return
 
-  requests.value = requests.value.map((item) => {
-    if (item.id !== request.id)
-      return item
-
-    return {
-      ...item,
-      priorityScore: value,
-    }
-  })
+  try {
+    await updateRequestPriority(request.id, value)
+    actionError.value = ""
+  }
+  catch {
+    actionError.value = "Failed to update priority in backend."
+  }
 }
 
 function badgeVariant(status: DecisionState) {
@@ -354,6 +365,9 @@ function updateDecisionDraft(id: string, value: string) {
                     Deny Request
                   </Button>
                 </div>
+                <p v-if="actionError" class="text-destructive mt-2 text-xs">
+                  {{ actionError }}
+                </p>
                 <p
                   v-if="selectedRequest.status === 'approved' || selectedRequest.status === 'denied'"
                   class="text-muted-foreground mt-2 text-xs"

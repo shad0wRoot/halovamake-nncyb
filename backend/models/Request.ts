@@ -5,16 +5,15 @@
 // SPDX-License-Identifier: LicenseRef-SSPL-1.0
 
 import mongoose from "mongoose";
-import passportLocalMongoose from "passport-local-mongoose";
-import { required } from "zod/v4/core/util.cjs";
 
 const { Schema, model } = mongoose;
 
-export interface IRequest extends mongoose.PassportLocalDocument {
+export interface IRequest extends mongoose.Document {
 
     email: string;
+    ownerEmail: string;
     fullName: string;
-    phoneNumber: number;
+    phoneNumber: string;
     company: string;
     companyType: string;
     companyAddress: string;
@@ -41,13 +40,14 @@ const requestSchema = new Schema<IRequest>(
    {
     title: {type: String, required: true}, 
     description: {type: String, required: true}, 
-    email: { type: String, required: true, unique: true },  
+    email: { type: String, required: true },
+    ownerEmail: { type: String, required: true, index: true },
     fullName: { type: String, required: true },
-    phoneNumber: { type: Number, required: true},
+    phoneNumber: { type: String, required: false},
     company: { type: String, required: false},
     companyType: { type: String, required: false},
     companyAddress: { type: String, required: false},
-    priority: {type: String, required: true}, 
+    priority: {type: Number, required: true, default: 3},
     linkedIn: {type: String, required: false}, 
     website: {type: String, required: false},
     
@@ -57,3 +57,5 @@ const requestSchema = new Schema<IRequest>(
    },
    { timestamps: true }
 );
+
+export default model<IRequest>("Request", requestSchema);

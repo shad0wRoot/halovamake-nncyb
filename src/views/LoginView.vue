@@ -7,6 +7,7 @@ SPDX-License-Identifier: LicenseRef-SSPL-1.0
 -->
 
 <script setup lang="ts">
+import axios from 'axios'
 import { Button } from '@/components/ui/button'
 import {
   Card,
@@ -23,54 +24,66 @@ import {
 } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import { Spinner } from '@/components/ui/spinner'
+import { setAuthSession } from '@/lib/authSession'
 import { cn } from "@/lib/utils"
 import { ref, type HTMLAttributes } from "vue"
-import { useAuth } from "vue-auth3"
-
-const auth = useAuth()
+import { useRouter } from 'vue-router'
 
 const props = defineProps<{
   class?: HTMLAttributes["class"]
 }>()
 
+const router = useRouter()
 const emailVal = ref("");
 const passVal = ref("");
 const isLoading = ref(false);
+const errorMessage = ref("")
 
 async function login() {
   isLoading.value = true;
+  errorMessage.value = ""
   try {
-    const authRes = await auth.login({
-      data: {
-        email: emailVal.value,
-        password: passVal.value,
-      },
-      redirect: { name: "/dashboard" },
-      remember: true,
-      staySignedIn: true,
-      fetchUser: false,
-    });
+    const response = await axios.post('/api/auth/login', {
+      email: emailVal.value,
+      password: passVal.value,
+    })
 
-    console.log('Auth response:', authRes);
+    const tokenFromHeader = response.headers?.authorization as string | undefined
+    const tokenFromBody = (response.data as { token?: string })?.token
+    const rawToken = tokenFromHeader ?? tokenFromBody ?? ""
+    const token = rawToken.replace(/^Bearer\s?/i, '')
 
-    // Extract token from response - check both header and data
-    let token = authRes?.headers?.authorization || authRes?.data?.token || null;
+    if (!token)
+      throw new Error('Missing auth token in login response.')
 
-    // Remove 'Bearer ' prefix if present
-    if (token && typeof token === 'string') {
-      token = token.replace(/^Bearer\s?/i, '');
+    const userFromBody = (response.data as { user?: { email?: string, role?: string, roles?: string[] } }).user
+    let user = userFromBody ?? null
+    if (!user?.email) {
+      const meResponse = await axios.get('/api/auth/user', {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      user = (meResponse.data as { user?: { email?: string, role?: string, roles?: string[] } }).user
+        ?? (meResponse.data as { email?: string, role?: string, roles?: string[] })
     }
 
-    console.log('Extracted token:', token);
+    if (!user?.email)
+      throw new Error('Could not resolve authenticated user profile.')
 
-    if (token) {
-      localStorage.setItem('key', token);
-      console.log('Token stored in localStorage');
-    } else {
-      console.warn('No token found in auth response');
-    }
+    const effectiveRole = user.role ?? (Array.isArray(user.roles) ? user.roles[0] : undefined)
+
+    setAuthSession(token, {
+      email: user.email,
+      role: effectiveRole,
+    })
+    axios.defaults.headers.common.Authorization = `Bearer ${token}`
+
+    if (effectiveRole === 'admin' || effectiveRole === 'ADMIN')
+      await router.push('/admin')
+    else
+      await router.push('/dashboard')
   } catch (error) {
-    console.error('Login failed:', error);
+    errorMessage.value = error instanceof Error ? error.message : 'Login failed.'
+  } finally {
     isLoading.value = false;
   }
 }
@@ -115,6 +128,9 @@ async function login() {
               <Button disabled v-else>
                 <Spinner></Spinner>
               </Button>
+              <p v-if="errorMessage" class="text-destructive mt-2 text-sm">
+                {{ errorMessage }}
+              </p>
               <FieldDescription class="text-center">
                 Don't have an account?
                 <router-link to="/signup" class="auth-link ml-1">

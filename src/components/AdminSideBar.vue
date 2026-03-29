@@ -9,7 +9,7 @@ SPDX-License-Identifier: LicenseRef-SSPL-1.0
 <script setup lang="ts">
 import type { SidebarProps } from "@/components/ui/sidebar"
 import { AlertTriangle, CheckCheck, Command, ListChecks } from "lucide-vue-next"
-import { computed, h, ref } from "vue"
+import { computed, h, onMounted, ref } from "vue"
 import { RouterLink } from "vue-router"
 import NavUser from "@/components/NavUser.vue"
 import { useAdminRequestsStore } from "@/stores/adminRequests"
@@ -67,7 +67,20 @@ const activeItem = ref(data.navMain[0])
 const onlyHighPriority = ref(false)
 const queueSearch = ref("")
 const { setOpen } = useSidebar()
-const { requests } = useAdminRequestsStore()
+const { requests, fetchRequests, isLoaded, errorMessage } = useAdminRequestsStore()
+const loadError = ref("")
+
+onMounted(async () => {
+  if (isLoaded.value)
+    return
+
+  try {
+    await fetchRequests()
+  }
+  catch {
+    loadError.value = errorMessage.value || "Failed to load requests."
+  }
+})
 
 const visibleRequests = computed(() => {
   let result = requests.value.filter((request) => {
@@ -218,6 +231,9 @@ function priorityLabel(priorityScore: number) {
               class="text-muted-foreground p-4 text-xs"
             >
               No requests match this filter.
+            </div>
+            <div v-if="loadError" class="text-destructive p-4 text-xs">
+              {{ loadError }}
             </div>
           </SidebarGroupContent>
         </SidebarGroup>

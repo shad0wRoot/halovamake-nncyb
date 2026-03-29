@@ -7,6 +7,9 @@ SPDX-License-Identifier: LicenseRef-SSPL-1.0
 -->
 
 <script setup lang="ts">
+import axios from "axios"
+import { ref } from "vue"
+import { useRouter } from "vue-router"
 import type { HTMLAttributes } from "vue"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -24,10 +27,76 @@ import {
   FieldLabel,
 } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
+import { setAuthSession } from "@/lib/authSession"
 
 const props = defineProps<{
   class?: HTMLAttributes["class"]
 }>()
+
+const router = useRouter()
+const fullName = ref("")
+const email = ref("")
+const password = ref("")
+const confirmPassword = ref("")
+const isLoading = ref(false)
+const errorMessage = ref("")
+
+async function signup() {
+  errorMessage.value = ""
+
+  if (password.value.length < 8) {
+    errorMessage.value = "Password must be at least 8 characters."
+    return
+  }
+
+  if (password.value !== confirmPassword.value) {
+    errorMessage.value = "Passwords do not match."
+    return
+  }
+
+  isLoading.value = true
+
+  try {
+    await axios.post('/api/auth/register', {
+      fullName: fullName.value,
+      email: email.value,
+      password: password.value,
+      passwordAgain: confirmPassword.value,
+    })
+
+    const loginResponse = await axios.post('/api/auth/login', {
+      email: email.value,
+      password: password.value,
+    })
+
+    const tokenFromHeader = loginResponse.headers?.authorization as string | undefined
+    const tokenFromBody = (loginResponse.data as { token?: string })?.token
+    const token = (tokenFromHeader ?? tokenFromBody ?? '').replace(/^Bearer\s?/i, '')
+
+    if (!token)
+      throw new Error('Missing auth token after sign up.')
+
+    const userFromBody = (loginResponse.data as { user?: { email?: string, role?: string, roles?: string[] } }).user
+    if (!userFromBody?.email)
+      throw new Error('Could not resolve signed up user profile.')
+
+    const effectiveRole = userFromBody.role ?? (Array.isArray(userFromBody.roles) ? userFromBody.roles[0] : undefined)
+
+    setAuthSession(token, {
+      email: userFromBody.email,
+      role: effectiveRole,
+    })
+    axios.defaults.headers.common.Authorization = `Bearer ${token}`
+
+    await router.push('/dashboard')
+  }
+  catch (error) {
+    errorMessage.value = error instanceof Error ? error.message : "Sign up failed."
+  }
+  finally {
+    isLoading.value = false
+  }
+}
 </script>
 
 <template>
@@ -42,13 +111,13 @@ const props = defineProps<{
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <form>
+        <form @submit.prevent="signup">
           <FieldGroup>
             <Field>
               <FieldLabel for="name">
                 Full Name
               </FieldLabel>
-              <Input id="name" type="text" placeholder="John Pork" required />
+              <Input id="name" v-model="fullName" type="text" placeholder="John Pork" :disabled="isLoading" required />
             </Field>
             <Field>
               <FieldLabel for="email">
@@ -56,8 +125,10 @@ const props = defineProps<{
               </FieldLabel>
               <Input
                 id="email"
+                v-model="email"
                 type="email"
                 placeholder="s0cM4js3r@nncyb.com"
+                :disabled="isLoading"
                 required
               />
             </Field>
@@ -67,13 +138,13 @@ const props = defineProps<{
                   <FieldLabel for="password">
                     Password
                   </FieldLabel>
-                  <Input id="password" type="password" required />
+                  <Input id="password" v-model="password" type="password" :disabled="isLoading" required />
                 </Field>
                 <Field>
                   <FieldLabel for="confirm-password">
                     Confirm Password
                   </FieldLabel>
-                  <Input id="confirm-password" type="password" required />
+                  <Input id="confirm-password" v-model="confirmPassword" type="password" :disabled="isLoading" required />
                 </Field>
               </Field>
               <FieldDescription>
@@ -81,9 +152,12 @@ const props = defineProps<{
               </FieldDescription>
             </Field>
             <Field>
-              <Button type="submit">
+              <Button type="submit" :disabled="isLoading">
                 Create Account
               </Button>
+              <p v-if="errorMessage" class="text-destructive mt-2 text-sm">
+                {{ errorMessage }}
+              </p>
               <FieldDescription class="text-center">
                 Already have an account?
                 <RouterLink to="/login" class="auth-link ml-1">

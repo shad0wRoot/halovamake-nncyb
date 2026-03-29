@@ -34,26 +34,33 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { computed, ref } from "vue"
+import { getActiveEmail } from '@/lib/authSession'
+import { computed, onMounted, ref } from "vue"
+import { useAdminRequestsStore } from "@/stores/adminRequests"
 
 const description = "Request outcome trends"
 
-const chartData = [
-  { date: new Date("2024-04-01"), accepted: 2, pending: 1, denied: 0 },
-  { date: new Date("2024-04-08"), accepted: 1, pending: 2, denied: 0 },
-  { date: new Date("2024-04-15"), accepted: 3, pending: 1, denied: 1 },
-  { date: new Date("2024-04-22"), accepted: 2, pending: 2, denied: 0 },
-  { date: new Date("2024-04-29"), accepted: 4, pending: 1, denied: 0 },
-  { date: new Date("2024-05-06"), accepted: 3, pending: 2, denied: 1 },
-  { date: new Date("2024-05-13"), accepted: 5, pending: 2, denied: 0 },
-  { date: new Date("2024-05-20"), accepted: 4, pending: 3, denied: 1 },
-  { date: new Date("2024-05-27"), accepted: 6, pending: 2, denied: 0 },
-  { date: new Date("2024-06-03"), accepted: 5, pending: 2, denied: 1 },
-  { date: new Date("2024-06-10"), accepted: 7, pending: 2, denied: 1 },
-  { date: new Date("2024-06-17"), accepted: 8, pending: 1, denied: 1 },
-  { date: new Date("2024-06-24"), accepted: 9, pending: 1, denied: 0 },
-]
-type Data = typeof chartData[number]
+interface DataPoint {
+  date: Date
+  accepted: number
+  pending: number
+  denied: number
+}
+
+const { requests, fetchRequests, isLoaded } = useAdminRequestsStore()
+
+onMounted(async () => {
+  if (!isLoaded.value)
+    await fetchRequests()
+})
+
+const currentUserEmail = computed(() =>
+  getActiveEmail(),
+)
+
+const userRequests = computed(() =>
+  requests.value.filter(request => request.ownerEmail.toLowerCase() === currentUserEmail.value),
+)
 
 const chartConfig = {
   accepted: {
@@ -111,10 +118,46 @@ const svgDefs = `
 `
 
 const timeRange = ref("90d")
+const chartData = computed<DataPoint[]>(() => {
+  const sorted = [...userRequests.value].sort((a, b) =>
+    new Date(a.submittedAt).getTime() - new Date(b.submittedAt).getTime(),
+  )
+
+  if (!sorted.length)
+    return []
+
+  let accepted = 0
+  let denied = 0
+  let pending = 0
+
+  return sorted.map((request) => {
+    if (request.status === "approved")
+      accepted += 1
+    else if (request.status === "denied")
+      denied += 1
+    else
+      pending += 1
+
+    return {
+      date: new Date(`${request.submittedAt}T00:00:00`),
+      accepted,
+      pending,
+      denied,
+    }
+  })
+})
+
 const filterRange = computed(() => {
-  return chartData.filter((item) => {
+  if (!chartData.value.length)
+    return []
+
+  const latestEntry = chartData.value[chartData.value.length - 1]
+  if (!latestEntry)
+    return []
+
+  return chartData.value.filter((item) => {
     const date = new Date(item.date)
-    const referenceDate = new Date("2024-06-30")
+    const referenceDate = new Date(latestEntry.date)
     let daysToSubtract = 90
     if (timeRange.value === "30d") {
       daysToSubtract = 30
@@ -127,15 +170,24 @@ const filterRange = computed(() => {
     return date >= startDate
   })
 })
+
+const yDomain = computed<[number, number]>(() => {
+  const max = filterRange.value.reduce((acc, item) =>
+    Math.max(acc, item.accepted, item.pending, item.denied), 0)
+
+  return [0, Math.max(2, max + 1)]
+})
+
+type Data = DataPoint
 </script>
 
 <template>
   <Card class="pt-0">
     <CardHeader class="flex items-center gap-2 space-y-0 border-b py-5 sm:flex-row">
       <div class="grid flex-1 gap-1">
-        <CardTitle>Request Outcomes Overview</CardTitle>
+        <CardTitle>User Request Outcomes</CardTitle>
         <CardDescription>
-          Approved, pending, and denied request counts over time
+          Cumulative approved, pending, and denied requests
         </CardDescription>
       </div>
       <Select v-model="timeRange">
@@ -159,12 +211,18 @@ const filterRange = computed(() => {
       </Select>
     </CardHeader>
     <CardContent class="px-2 pt-4 sm:px-6 sm:pt-6 pb-4">
-      <ChartContainer :config="chartConfig" class="aspect-auto h-[250px] w-full" :cursor="false">
+      <div
+        v-if="filterRange.length === 0"
+        class="text-muted-foreground flex h-[250px] items-center justify-center rounded-lg border border-dashed text-sm"
+      >
+        No request history yet for this account.
+      </div>
+      <ChartContainer v-else :config="chartConfig" class="aspect-auto h-[250px] w-full" :cursor="false">
         <VisXYContainer
           :data="filterRange"
           :svg-defs="svgDefs"
           :margin="{ left: -40 }"
-          :y-domain="[0, 10]"
+          :y-domain="yDomain"
         >
           <VisArea
             :x="(d: Data) => d.date"

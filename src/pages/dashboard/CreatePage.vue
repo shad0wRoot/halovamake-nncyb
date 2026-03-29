@@ -9,6 +9,7 @@ SPDX-License-Identifier: LicenseRef-SSPL-1.0
 <script setup lang="ts">
 import { toTypedSchema } from '@vee-validate/zod'
 import { useForm } from 'vee-validate'
+import { onMounted, ref } from 'vue'
 import * as z from 'zod'
 
 import { Badge } from '@/components/ui/badge'
@@ -22,11 +23,15 @@ import {
   FormMessage,
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
+import { getActiveEmail } from '@/lib/authSession'
+import { useAdminRequestsStore } from '@/stores/adminRequests'
 
 const optionalUrl = z.union([
   z.literal(''),
   z.string().url('Please enter a valid URL (https://...)'),
 ])
+
+const DRAFT_KEY = 'nncyb-create-request-draft'
 
 const formSchema = toTypedSchema(z.object({
   fullName: z.string().trim().min(2, 'Please enter your full name').max(100),
@@ -37,7 +42,7 @@ const formSchema = toTypedSchema(z.object({
   requestTitle: z.string().trim().min(3, 'Request title is required').max(120),
   description: z.string().trim().min(100, 'Please provide more detail (min 100 characters)').max(3000),
   contactEmail: z.string().trim().email('Please enter a valid email'),
-  contactPhone: z.string().trim().max(30).optional(),
+  contactPhone: z.string().trim().min(5, 'Phone is required').max(30),
   contactLinkedIn: optionalUrl,
   website: optionalUrl,
 }))
@@ -59,8 +64,67 @@ const form = useForm({
   },
 })
 
-const onSubmit = form.handleSubmit((values) => {
-  console.log('Form submitted!', values)
+const { createRequest } = useAdminRequestsStore()
+const submitMessage = ref('')
+const submitError = ref('')
+const draftMessage = ref('')
+
+function saveDraft() {
+  localStorage.setItem(DRAFT_KEY, JSON.stringify(form.values))
+  draftMessage.value = `Draft saved at ${new Date().toLocaleTimeString()}`
+}
+
+onMounted(() => {
+  const raw = localStorage.getItem(DRAFT_KEY)
+  if (!raw)
+    return
+
+  try {
+    const draft = JSON.parse(raw) as Record<string, string>
+    form.resetForm({
+      values: {
+        ...form.values,
+        ...draft,
+      },
+    })
+    draftMessage.value = 'Draft restored.'
+  }
+  catch {
+    localStorage.removeItem(DRAFT_KEY)
+  }
+})
+
+const onSubmit = form.handleSubmit(async (values) => {
+  submitError.value = ''
+  submitMessage.value = ''
+  const ownerEmail = getActiveEmail() || values.contactEmail.toLowerCase()
+
+  try {
+    await createRequest({
+      ownerEmail,
+      requestTitle: values.requestTitle,
+      requester: values.fullName,
+      role: values.role,
+      companyName: values.companyName || '',
+      companyLocation: values.companyLocation || '',
+      companyType: values.companyType || '',
+      contactEmail: values.contactEmail,
+      contactPhone: values.contactPhone,
+      contactLinkedIn: values.contactLinkedIn || '',
+      website: values.website || '',
+      details: values.description,
+    })
+
+    submitMessage.value = 'Request submitted successfully. It is now in the admin queue.'
+    draftMessage.value = ''
+    localStorage.removeItem(DRAFT_KEY)
+    form.resetForm()
+  }
+  catch (error) {
+    submitError.value = error instanceof Error
+      ? error.message
+      : 'Request submission failed. Check backend connection and try again.'
+  }
 })
 </script>
 
@@ -255,9 +319,18 @@ const onSubmit = form.handleSubmit((values) => {
         </div>
 
         <div class="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
-          <Button type="button" variant="outline">Save Draft</Button>
+          <Button type="button" variant="outline" @click="saveDraft">Save Draft</Button>
           <Button type="submit">Submit Request</Button>
         </div>
+        <p v-if="draftMessage" class="text-sm text-muted-foreground">
+          {{ draftMessage }}
+        </p>
+        <p v-if="submitMessage" class="text-sm text-emerald-600">
+          {{ submitMessage }}
+        </p>
+        <p v-if="submitError" class="text-destructive text-sm">
+          {{ submitError }}
+        </p>
       </form>
     </div>
   </section>
