@@ -62,3 +62,20 @@ export function getActiveEmail() {
 
   return ""
 }
+
+export function getDisplayName(user: AppUser | null) {
+  const explicitName = user?.fullName?.trim() || user?.name?.trim()
+  if (explicitName)
+    return explicitName
+
+  const email = user?.email?.trim()
+  if (!email)
+    return "Guest"
+
+  const localPart = email.split("@")[0] || "guest"
+  return localPart
+    .split(/[._-]+/)
+    .filter(Boolean)
+    .map(part => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ") || "Guest"
+}

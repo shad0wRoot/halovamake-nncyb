@@ -62,8 +62,8 @@ async function login() {
       const meResponse = await axios.get('/api/auth/user', {
         headers: { Authorization: `Bearer ${token}` },
       })
-      user = (meResponse.data as { user?: { email?: string, role?: string, roles?: string[] } }).user
-        ?? (meResponse.data as { email?: string, role?: string, roles?: string[] })
+      user = (meResponse.data as { user?: { email?: string, fullName?: string, name?: string, role?: string, roles?: string[] } }).user
+        ?? (meResponse.data as { email?: string, fullName?: string, name?: string, role?: string, roles?: string[] })
     }
 
     if (!user?.email)

@@ -12,7 +12,7 @@ import { AlertTriangle, CheckCheck, Command, ListChecks } from "lucide-vue-next"
 import { computed, h, onMounted, ref } from "vue"
 import { RouterLink } from "vue-router"
 import NavUser from "@/components/NavUser.vue"
-import { getAuthUser } from "@/lib/authSession"
+import { getAuthUser, getDisplayName } from "@/lib/authSession"
 import { useAdminRequestsStore } from "@/stores/adminRequests"
 import { Label } from "@/components/ui/label"
 import {
@@ -62,7 +62,7 @@ const data = {
 const user = computed(() => {
   const authUser = getAuthUser()
   return {
-    name: authUser?.fullName || authUser?.name || authUser?.email || "Admin",
+    name: getDisplayName(authUser),
     email: authUser?.email || "Not signed in",
     avatar: "",
   }
