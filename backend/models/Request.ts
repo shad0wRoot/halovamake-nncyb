@@ -32,6 +32,8 @@ export interface IRequest extends mongoose.Document {
 
     reviewer: string;
     decisionReason: string;
+    activeReviewerName: string;
+    activeReviewerEmail: string;
     status: string;
     
 }
@@ -54,6 +56,8 @@ const requestSchema = new Schema<IRequest>(
     
     reviewer: {type: String, required: false, default: ""},
     decisionReason: {type: String, required: false, default: ""},
+    activeReviewerName: {type: String, required: false, default: ""},
+    activeReviewerEmail: {type: String, required: false, default: ""},
     status: {type: String, required: true, default: "PENDING"},
 
    },

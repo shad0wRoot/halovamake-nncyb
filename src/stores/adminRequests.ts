@@ -29,6 +29,8 @@ export interface AdminRequest {
   details: string
   decisionReason?: string
   reviewer?: string
+  activeReviewerName?: string
+  activeReviewerEmail?: string
   appealMessage?: string
 }
 
@@ -52,6 +54,7 @@ interface UpdateRequestBody {
   priorityScore?: number
   status?: "approved" | "denied"
   decisionReason?: string
+  assignmentAction?: "take" | "release"
 }
 
 const requests = ref<AdminRequest[]>([])
@@ -102,6 +105,8 @@ function normalizeRequest(raw: Record<string, unknown>): AdminRequest {
     details: String(raw.details ?? raw.description ?? ""),
     decisionReason: String(raw.decisionReason ?? raw.decision_reason ?? ""),
     reviewer: String(raw.reviewer ?? ""),
+    activeReviewerName: String(raw.activeReviewerName ?? raw.active_reviewer_name ?? ""),
+    activeReviewerEmail: String(raw.activeReviewerEmail ?? raw.active_reviewer_email ?? ""),
     appealMessage: String(raw.appealMessage ?? raw.appeal_message ?? ""),
   }
 }
@@ -203,6 +208,14 @@ export async function updateRequestDecision(id: string, status: "approved" | "de
   await patchRequest(id, { status, decisionReason })
 }
 
+export async function takeRequestOwnership(id: string) {
+  await patchRequest(id, { assignmentAction: "take" })
+}
+
+export async function releaseRequestOwnership(id: string) {
+  await patchRequest(id, { assignmentAction: "release" })
+}
+
 export function useAdminRequestsStore() {
   return {
     requests,
@@ -214,5 +227,7 @@ export function useAdminRequestsStore() {
     deleteRequest,
     updateRequestDecision,
     updateRequestPriority,
+    takeRequestOwnership,
+    releaseRequestOwnership,
   }
 }

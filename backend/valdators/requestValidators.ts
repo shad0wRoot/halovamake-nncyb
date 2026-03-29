@@ -27,6 +27,7 @@ export const patchRequestSchema = z
     priorityScore: z.number().int().min(1).max(5).optional(),
     status: z.enum(["approved", "denied"]).optional(),
     decisionReason: z.string().max(1000).optional(),
+    assignmentAction: z.enum(["take", "release"]).optional(),
   })
   .refine((payload) => {
     if (!payload.status)

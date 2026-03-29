@@ -9,11 +9,13 @@ SPDX-License-Identifier: LicenseRef-SSPL-1.0
 <script setup lang="ts">
 import type { SidebarProps } from "@/components/ui/sidebar"
 import { AlertTriangle, CheckCheck, Command, ListChecks } from "lucide-vue-next"
-import { computed, h, onMounted, ref } from "vue"
+import { computed, h, onMounted, ref, watch } from "vue"
 import { RouterLink } from "vue-router"
 import NavUser from "@/components/NavUser.vue"
 import { getAuthUser, getDisplayName } from "@/lib/authSession"
+import { collectAvailableTags, getReviewerSelectedTags, requestTag, saveReviewerSelectedTags, tagLabel } from "@/lib/reviewerTags"
 import { useAdminRequestsStore } from "@/stores/adminRequests"
+import { Badge } from "@/components/ui/badge"
 import { Label } from "@/components/ui/label"
 import {
   Sidebar,
@@ -45,6 +47,12 @@ const data = {
       isActive: true,
     },
     {
+      title: "My Tags",
+      key: "my-tags",
+      icon: Command,
+      isActive: false,
+    },
+    {
       title: "Appeals",
       key: "appeals",
       icon: AlertTriangle,
@@ -71,11 +79,15 @@ const user = computed(() => {
 const activeItem = ref(data.navMain[0])
 const onlyHighPriority = ref(false)
 const queueSearch = ref("")
+const selectedTags = ref<string[]>([])
 const { setOpen } = useSidebar()
 const { requests, fetchRequests, isLoaded, errorMessage } = useAdminRequestsStore()
 const loadError = ref("")
+const reviewerEmail = computed(() => getAuthUser()?.email?.toLowerCase() || "")
 
 onMounted(async () => {
+  selectedTags.value = getReviewerSelectedTags(reviewerEmail.value)
+
   if (isLoaded.value)
     return
 
@@ -87,11 +99,24 @@ onMounted(async () => {
   }
 })
 
+watch(selectedTags, (value) => {
+  saveReviewerSelectedTags(reviewerEmail.value, value)
+}, { deep: true })
+
+const availableTags = computed(() => collectAvailableTags(requests.value))
+
 const visibleRequests = computed(() => {
   let result = requests.value.filter((request) => {
     const key = activeItem.value?.key
     if (key === "queue")
       return request.status === "pending"
+    if (key === "my-tags") {
+      if (selectedTags.value.length === 0)
+        return false
+      const tag = requestTag(request)
+      const isActionable = request.status === "pending" || request.status === "appealed"
+      return isActionable && selectedTags.value.includes(tag)
+    }
     if (key === "appeals")
       return request.status === "appealed"
     return request.status === "approved" || request.status === "denied"
@@ -129,7 +154,7 @@ function priorityLabel(priorityScore: number) {
 
 <template>
   <Sidebar
-    class="overflow-hidden *:data-[sidebar=sidebar]:flex-row"
+    class="border-r bg-sidebar *:data-[sidebar=sidebar]:flex-row"
     v-bind="props"
   >
     <!-- This is the first sidebar -->
@@ -190,7 +215,10 @@ function priorityLabel(priorityScore: number) {
 
     <!--  This is the second sidebar -->
     <!--  We disable collapsible and let it fill remaining space -->
-    <Sidebar collapsible="none" class="hidden flex-1 md:flex">
+    <Sidebar
+      collapsible="none"
+      class="hidden w-[min(300px,24vw)] shrink-0 border-r lg:w-[min(320px,24vw)] xl:w-[340px] md:flex"
+    >
       <SidebarHeader class="gap-3.5 border-b p-4">
         <div class="flex w-full items-center justify-between">
           <div class="text-base font-medium text-foreground">
@@ -202,18 +230,31 @@ function priorityLabel(priorityScore: number) {
           </Label>
         </div>
         <SidebarInput v-model="queueSearch" placeholder="Search requests..." />
+        <div v-if="activeItem?.key === 'my-tags'" class="flex flex-wrap gap-1">
+          <Badge
+            v-for="tag in selectedTags"
+            :key="tag"
+            variant="secondary"
+            class="text-[11px]"
+          >
+            {{ tagLabel(tag) }}
+          </Badge>
+          <span v-if="selectedTags.length === 0" class="text-muted-foreground text-xs">
+            No preferred tags selected yet. Set them in Admin Settings.
+          </span>
+        </div>
       </SidebarHeader>
-      <SidebarContent>
+      <SidebarContent class="overflow-y-auto">
         <SidebarGroup class="px-0">
           <SidebarGroupContent>
             <RouterLink
               v-for="request in visibleRequests"
               :key="request.id"
               :to="{ path: '/admin', query: { request: request.id } }"
-              class="hover:bg-sidebar-accent hover:text-sidebar-accent-foreground text-foreground flex flex-col items-start gap-2 border-b p-4 text-sm leading-tight whitespace-nowrap last:border-b-0"
+              class="hover:bg-sidebar-accent hover:text-sidebar-accent-foreground text-foreground flex w-full flex-col items-start gap-2 border-b p-4 text-sm leading-tight last:border-b-0"
             >
               <div class="flex w-full items-center gap-2">
-                <span class="font-medium">{{ request.requester }}</span>
+                <span class="max-w-[170px] truncate font-medium lg:max-w-[210px]">{{ request.requester }}</span>
                 <span class="text-muted-foreground ml-auto text-xs">{{ request.submittedAt }}</span>
               </div>
               <div class="flex w-full items-center justify-between gap-2">
@@ -225,21 +266,35 @@ function priorityLabel(priorityScore: number) {
                   {{ request.status }}
                 </span>
               </div>
-              <span class="text-muted-foreground line-clamp-2 w-[260px] whitespace-break-spaces text-xs">
+              <span class="text-muted-foreground line-clamp-2 w-full whitespace-break-spaces text-xs">
                 {{ request.details }}
               </span>
-              <span class="text-muted-foreground text-[11px] uppercase tracking-wide">
-                {{ request.id }} • Priority {{ priorityLabel(request.priorityScore) }}
-              </span>
+              <div class="flex w-full items-center justify-between gap-2">
+                <span class="text-muted-foreground text-[11px] uppercase tracking-wide">
+                  {{ request.id }} • Priority {{ priorityLabel(request.priorityScore) }}
+                </span>
+                <Badge variant="outline" class="text-[10px]">
+                  {{ tagLabel(requestTag(request)) }}
+                </Badge>
+              </div>
             </RouterLink>
             <div
               v-if="visibleRequests.length === 0"
               class="text-muted-foreground p-4 text-xs"
             >
-              No requests match this filter.
+              <span v-if="activeItem?.key === 'my-tags' && selectedTags.length === 0">
+                Choose your preferred tags in Admin Settings first.
+              </span>
+              <span v-else>
+                No requests match this filter.
+              </span>
             </div>
             <div v-if="loadError" class="text-destructive p-4 text-xs">
               {{ loadError }}
+            </div>
+            <div v-if="activeItem?.key === 'my-tags' && selectedTags.length > 0" class="text-muted-foreground p-4 pt-0 text-[11px]">
+              Available tags in DB:
+              {{ availableTags.map(tagLabel).join(", ") }}
             </div>
           </SidebarGroupContent>
         </SidebarGroup>

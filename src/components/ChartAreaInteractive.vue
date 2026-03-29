@@ -62,7 +62,7 @@ const userRequests = computed(() =>
   requests.value.filter(request => request.ownerEmail.toLowerCase() === currentUserEmail.value),
 )
 
-const chartConfig = {
+const chartConfig = ref({
   accepted: {
     label: "Accepted",
     color: "#22c55e",
@@ -75,47 +75,7 @@ const chartConfig = {
     label: "Denied",
     color: "#ef4444",
   },
-
-} satisfies ChartConfig
-
-const svgDefs = `
-  <linearGradient id="fillAccepted" x1="0" y1="0" x2="0" y2="1">
-    <stop
-      offset="5%"
-      stop-color="var(--color-accepted)"
-      stop-opacity="0.8"
-    />
-    <stop
-      offset="95%"
-      stop-color="var(--color-accepted)"
-      stop-opacity="0.1"
-    />
-  </linearGradient>
-  <linearGradient id="fillPending" x1="0" y1="0" x2="0" y2="1">
-    <stop
-      offset="5%"
-      stop-color="var(--color-pending)"
-      stop-opacity="0.8"
-    />
-    <stop
-      offset="95%"
-      stop-color="var(--color-pending)"
-      stop-opacity="0.1"
-    />
-  </linearGradient>
-  <linearGradient id="fillDenied" x1="0" y1="0" x2="0" y2="1">
-    <stop
-      offset="5%"
-      stop-color="var(--color-denied)"
-      stop-opacity="0.8"
-    />
-    <stop
-      offset="95%"
-      stop-color="var(--color-denied)"
-      stop-opacity="0.1"
-    />
-  </linearGradient>
-`
+})
 
 const timeRange = ref("90d")
 const chartData = computed<DataPoint[]>(() => {
@@ -220,21 +180,23 @@ type Data = DataPoint
       <ChartContainer v-else :config="chartConfig" class="aspect-auto h-[250px] w-full" :cursor="false">
         <VisXYContainer
           :data="filterRange"
-          :svg-defs="svgDefs"
           :margin="{ left: -40 }"
           :y-domain="yDomain"
+          :key="timeRange"  
         >
           <VisArea
             :x="(d: Data) => d.date"
             :y="[(d: Data) => d.accepted, (d: Data) => d.pending, (d: Data) => d.denied]"
-            :color="(d: Data, i: number) => ['url(#fillAccepted)', 'url(#fillPending)', 'url(#fillDenied)'][i]"
+            :color="(d: Data, i: number) => [chartConfig.accepted.color, chartConfig.pending.color, chartConfig.denied.color][i]"
             :opacity="0.6"
+            :key="'area-' + timeRange"
           />
           <VisLine
             :x="(d: Data) => d.date"
             :y="[(d: Data) => d.accepted, (d: Data) => d.pending, (d: Data) => d.denied]"
-            :color="(d: Data, i: number) => [chartConfig.accepted.color, chartConfig.pending.color, chartConfig.denied  .color][i]"
+            :color="(d: Data, i: number) => [chartConfig.accepted.color, chartConfig.pending.color, chartConfig.denied.color][i]"
             :line-width="1"
+            :key="'line-' + timeRange"
           />
           <VisAxis
             type="x"

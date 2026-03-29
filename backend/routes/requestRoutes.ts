@@ -21,6 +21,11 @@ function hasReviewerRole(authUser: NonNullable<AuthenticatedRequest["authUser"]>
   }) || authUser.email.toLowerCase() === "admin@admin.com";
 }
 
+function hasAdminRole(authUser: NonNullable<AuthenticatedRequest["authUser"]>) {
+  const roles = authUser.roles ?? [];
+  return roles.some(role => role.toUpperCase() === "ADMIN");
+}
+
 function serializeRequest(doc: {
   _id: unknown;
   ownerEmail: string;
@@ -39,6 +44,8 @@ function serializeRequest(doc: {
   description: string;
   reviewer?: string;
   decisionReason?: string;
+  activeReviewerName?: string;
+  activeReviewerEmail?: string;
 }) {
   return {
     id: String(doc._id),
@@ -59,6 +66,8 @@ function serializeRequest(doc: {
     details: doc.description,
     reviewer: doc.reviewer || "",
     decisionReason: doc.decisionReason || "",
+    activeReviewerName: doc.activeReviewerName || "",
+    activeReviewerEmail: doc.activeReviewerEmail || "",
     appealMessage: "",
   };
 }
@@ -140,6 +149,8 @@ router.post("/", requireAuth, validate(createRequestSchema), async (req: Authent
     website: payload.website || "",
     reviewer: "",
     decisionReason: "",
+    activeReviewerName: "",
+    activeReviewerEmail: "",
     status: (payload.status || "pending").toUpperCase(),
   });
 
@@ -160,11 +171,13 @@ router.patch("/:id", requireAuth, validate(patchRequestSchema), async (req: Auth
     priorityScore?: number;
     status?: "approved" | "denied";
     decisionReason?: string;
+    assignmentAction?: "take" | "release";
   };
 
   const isReviewUpdate = typeof payload.priorityScore === "number"
     || Boolean(payload.status)
-    || typeof payload.decisionReason === "string";
+    || typeof payload.decisionReason === "string"
+    || Boolean(payload.assignmentAction);
   if (isReviewUpdate && !hasReviewerRole(authUser)) {
     return res.status(403).json({
       status: "error",
@@ -173,6 +186,42 @@ router.patch("/:id", requireAuth, validate(patchRequestSchema), async (req: Auth
   }
 
   const update: Record<string, unknown> = {};
+  const reviewerUser = await User.findById(authUser.id).select("fullName").lean();
+  const reviewerName = reviewerUser?.fullName || authUser.email;
+
+  if (payload.assignmentAction) {
+    const existing = await RequestModel.findById(id).lean();
+    if (!existing) {
+      return res.status(404).json({ status: "error", message: "Request not found" });
+    }
+
+    const currentAssignee = String(existing.activeReviewerEmail || "").toLowerCase();
+    const currentUserEmail = authUser.email.toLowerCase();
+    const adminUser = hasAdminRole(authUser);
+
+    if (payload.assignmentAction === "take") {
+      if (currentAssignee && currentAssignee !== currentUserEmail) {
+        return res.status(409).json({
+          status: "error",
+          message: `This request is already being handled by ${existing.activeReviewerName || existing.activeReviewerEmail}.`,
+        });
+      }
+      update.activeReviewerEmail = authUser.email;
+      update.activeReviewerName = reviewerName;
+    }
+
+    if (payload.assignmentAction === "release") {
+      if (currentAssignee && currentAssignee !== currentUserEmail && !adminUser) {
+        return res.status(403).json({
+          status: "error",
+          message: "You can only release requests assigned to you.",
+        });
+      }
+      update.activeReviewerEmail = "";
+      update.activeReviewerName = "";
+    }
+  }
+
   if (typeof payload.priorityScore === "number")
     update.priority = payload.priorityScore;
 
@@ -181,8 +230,7 @@ router.patch("/:id", requireAuth, validate(patchRequestSchema), async (req: Auth
 
   if (typeof payload.decisionReason === "string") {
     update.decisionReason = payload.decisionReason;
-    const reviewerUser = await User.findById(authUser.id).select("fullName").lean();
-    update.reviewer = reviewerUser?.fullName || authUser.email;
+    update.reviewer = reviewerName;
   }
 
   const updated = await RequestModel.findByIdAndUpdate(id, update, { new: true }).lean();

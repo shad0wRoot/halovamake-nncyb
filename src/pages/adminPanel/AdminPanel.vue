@@ -15,6 +15,7 @@ export const iframeHeight = "900px"
 import { computed, onMounted, ref, watch } from "vue"
 import { useRoute, useRouter } from "vue-router"
 import AppSidebar from "@/components/AdminSideBar.vue"
+import { getAuthUser } from "@/lib/authSession"
 import { useAdminRequestsStore } from "@/stores/adminRequests"
 import { Badge } from "@/components/ui/badge"
 import {
@@ -43,15 +44,20 @@ const {
   fetchRequests,
   updateRequestDecision,
   updateRequestPriority,
+  takeRequestOwnership,
+  releaseRequestOwnership,
   errorMessage,
 } = useAdminRequestsStore()
 
+const authUser = getAuthUser()
+const currentReviewerEmail = (authUser?.email || "").toLowerCase()
 const selectedRequestId = ref("")
 const decisionDrafts = ref<Record<string, string>>({})
 const decisionErrors = ref<Record<string, string>>({})
 const actionError = ref("")
 const reviewNotice = ref("")
 const isSubmittingDecision = ref(false)
+const isUpdatingAssignment = ref(false)
 
 onMounted(async () => {
   try {
@@ -205,16 +211,82 @@ function updateDecisionDraft(id: string, value: string) {
   if (decisionErrors.value[id])
     decisionErrors.value[id] = ""
 }
+
+function initials(value: string) {
+  const cleaned = value.trim()
+  if (!cleaned)
+    return "RV"
+
+  const parts = cleaned.split(/\s+/).filter(Boolean)
+  if (parts.length === 1)
+    return (parts[0] ?? "").slice(0, 2).toUpperCase()
+
+  return `${parts[0]?.[0] ?? ""}${parts[1]?.[0] ?? ""}`.toUpperCase()
+}
+
+const isAssignedToMe = computed(() => {
+  const request = selectedRequest.value
+  if (!request?.activeReviewerEmail)
+    return false
+  return request.activeReviewerEmail.toLowerCase() === currentReviewerEmail
+})
+
+const isAssignedToOther = computed(() => {
+  const request = selectedRequest.value
+  if (!request?.activeReviewerEmail)
+    return false
+  return request.activeReviewerEmail.toLowerCase() !== currentReviewerEmail
+})
+
+const activeReviewerDisplay = computed(() => {
+  const request = selectedRequest.value
+  if (!request?.activeReviewerEmail)
+    return null
+  return {
+    name: request.activeReviewerName || request.activeReviewerEmail,
+    email: request.activeReviewerEmail,
+  }
+})
+
+const assignmentButtonLabel = computed(() => {
+  if (isAssignedToMe.value)
+    return "Release Request"
+  if (isAssignedToOther.value)
+    return "Taken by Reviewer"
+  return "Take Request"
+})
+
+async function toggleAssignment() {
+  const request = selectedRequest.value
+  if (!request || isUpdatingAssignment.value || isAssignedToOther.value)
+    return
+
+  isUpdatingAssignment.value = true
+  try {
+    if (isAssignedToMe.value)
+      await releaseRequestOwnership(request.id)
+    else
+      await takeRequestOwnership(request.id)
+
+    actionError.value = ""
+  }
+  catch {
+    actionError.value = "Failed to update reviewer ownership."
+  }
+  finally {
+    isUpdatingAssignment.value = false
+  }
+}
 </script>
 
 <template>
   <SidebarProvider
     :style="{
-      '--sidebar-width': 'clamp(320px, 30vw, 440px)',
+      '--sidebar-width': 'clamp(240px, 23vw, 320px)',
     }"
   >
     <AppSidebar />
-    <SidebarInset>
+    <SidebarInset class="min-w-0">
       <header class="bg-background/95 text-foreground backdrop-blur supports-[backdrop-filter]:bg-background/75 sticky top-0 z-10 flex shrink-0 items-center gap-2 border-b px-4 py-3 lg:px-6">
         <SidebarTrigger class="-ml-1" />
         <Separator
@@ -236,7 +308,7 @@ function updateDecisionDraft(id: string, value: string) {
         </Breadcrumb>
       </header>
 
-      <div class="text-foreground mx-auto flex w-full max-w-[1600px] flex-1 flex-col gap-6 p-4 lg:p-8">
+      <div class="text-foreground mx-auto flex w-full max-w-[1500px] min-w-0 flex-1 flex-col gap-6 p-4 lg:p-8">
         <div class="rounded-2xl border bg-card/80 p-4 shadow-xs lg:p-5">
           <div class="flex flex-wrap items-start justify-between gap-4">
             <div>
@@ -245,7 +317,7 @@ function updateDecisionDraft(id: string, value: string) {
                 Pick a request from the left queue, review it, submit decision, then continue with the next one.
               </p>
             </div>
-            <div class="grid min-w-[280px] grid-cols-2 gap-2 sm:grid-cols-4">
+            <div class="grid w-full grid-cols-2 gap-2 sm:w-auto sm:grid-cols-4">
               <div class="rounded-lg border bg-background/60 px-3 py-2">
                 <p class="text-muted-foreground text-[11px] uppercase tracking-wide">Awaiting</p>
                 <p class="mt-1 text-xl font-semibold">{{ actionableCount }}</p>
@@ -279,6 +351,23 @@ function updateDecisionDraft(id: string, value: string) {
                   <Badge :variant="badgeVariant(selectedRequest.status)">
                     {{ prettyStatus(selectedRequest.status) }}
                   </Badge>
+                  <button
+                    v-if="activeReviewerDisplay"
+                    type="button"
+                    class="bg-primary/10 text-primary inline-flex h-8 w-8 items-center justify-center rounded-full text-xs font-semibold"
+                    :title="`${activeReviewerDisplay.name} (${activeReviewerDisplay.email})`"
+                  >
+                    {{ initials(activeReviewerDisplay.name) }}
+                  </button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    :disabled="isUpdatingAssignment || isAssignedToOther"
+                    :title="activeReviewerDisplay ? `${activeReviewerDisplay.name} (${activeReviewerDisplay.email})` : 'Assign this request to yourself'"
+                    @click="toggleAssignment"
+                  >
+                    {{ assignmentButtonLabel }}
+                  </Button>
                   <Button variant="outline" size="sm" @click="closeSelectedRequest">
                     Close
                   </Button>

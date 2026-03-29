@@ -325,13 +325,9 @@ const table = useVueTable({
               <template v-if="table.getRowModel().rows.length">
                 <DraggableRow v-for="row in table.getRowModel().rows" :key="row.id" :row="row" :index="row.index" />
               </template>
-              <TableRow v-else>
-                <TableCell
-                  :col-span="columns.length"
-                  class="h-24 text-center"
-                >
+              <TableRow v-else :col-span="columns.length"
+                  class="h-24 text-center">
                   No results.
-                </TableCell>
               </TableRow>
             </TableBody>
           </Table>
