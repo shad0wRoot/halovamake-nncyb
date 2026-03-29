@@ -12,6 +12,7 @@ import { AlertTriangle, CheckCheck, Command, ListChecks } from "lucide-vue-next"
 import { computed, h, ref } from "vue"
 import { RouterLink } from "vue-router"
 import NavUser from "@/components/NavUser.vue"
+import { useAdminRequestsStore } from "@/stores/adminRequests"
 import { Label } from "@/components/ui/label"
 import {
   Sidebar,
@@ -33,7 +34,6 @@ const props = withDefaults(defineProps<SidebarProps>(), {
 })
 
 type QueueState = "pending" | "appealed" | "approved" | "denied"
-type QueuePriority = "low" | "medium" | "high" | "critical"
 
 const data = {
   user: {
@@ -61,62 +61,16 @@ const data = {
       isActive: false,
     },
   ],
-  requests: [
-    {
-      id: "REQ-1001",
-      requester: "Arietta Cruz",
-      title: "Tuition Refund Appeal",
-      date: "Today",
-      priority: "high",
-      status: "pending",
-      teaser: "Requested a partial refund due to duplicate billing.",
-    },
-    {
-      id: "REQ-1002",
-      requester: "Noah Bennett",
-      title: "Extension Request",
-      date: "Today",
-      priority: "medium",
-      status: "pending",
-      teaser: "Needs a 7-day extension for supporting documentation.",
-    },
-    {
-      id: "REQ-1003",
-      requester: "Kelsie Hart",
-      title: "Denied Housing Exception",
-      date: "Yesterday",
-      priority: "critical",
-      status: "appealed",
-      teaser: "Appealed denied exception with additional verification attached.",
-    },
-    {
-      id: "REQ-1004",
-      requester: "Minseo Park",
-      title: "Program Transfer",
-      date: "2 days ago",
-      priority: "low",
-      status: "approved",
-      teaser: "Transfer approved after advisor confirmation.",
-    },
-    {
-      id: "REQ-1005",
-      requester: "Elijah Reed",
-      title: "Emergency Fee Waiver",
-      date: "3 days ago",
-      priority: "high",
-      status: "denied",
-      teaser: "Denied due to incomplete proof of hardship.",
-    },
-  ],
 }
 
 const activeItem = ref(data.navMain[0])
 const onlyHighPriority = ref(false)
 const queueSearch = ref("")
 const { setOpen } = useSidebar()
+const { requests } = useAdminRequestsStore()
 
 const visibleRequests = computed(() => {
-  let result = data.requests.filter((request) => {
+  let result = requests.value.filter((request) => {
     if (activeItem.value.key === "queue")
       return request.status === "pending"
     if (activeItem.value.key === "appeals")
@@ -125,12 +79,12 @@ const visibleRequests = computed(() => {
   })
 
   if (onlyHighPriority.value)
-    result = result.filter((request) => request.priority === "high" || request.priority === "critical")
+    result = result.filter((request) => request.priorityScore >= 4)
 
   const needle = queueSearch.value.trim().toLowerCase()
   if (needle) {
     result = result.filter((request) =>
-      [request.id, request.requester, request.title, request.teaser].some((value) =>
+      [request.id, request.requester, request.requestTitle, request.details].some((value) =>
         value.toLowerCase().includes(needle),
       ),
     )
@@ -149,14 +103,8 @@ function statusClass(status: QueueState) {
   return "bg-slate-100 text-slate-800"
 }
 
-function priorityLabel(priority: QueuePriority) {
-  if (priority === "critical")
-    return "Critical"
-  if (priority === "high")
-    return "High"
-  if (priority === "medium")
-    return "Medium"
-  return "Low"
+function priorityLabel(priorityScore: number) {
+  return `${priorityScore}/5`
 }
 </script>
 
@@ -247,10 +195,10 @@ function priorityLabel(priority: QueuePriority) {
             >
               <div class="flex w-full items-center gap-2">
                 <span class="font-medium">{{ request.requester }}</span>
-                <span class="text-muted-foreground ml-auto text-xs">{{ request.date }}</span>
+                <span class="text-muted-foreground ml-auto text-xs">{{ request.submittedAt }}</span>
               </div>
               <div class="flex w-full items-center justify-between gap-2">
-                <span class="truncate font-medium">{{ request.title }}</span>
+                <span class="truncate font-medium">{{ request.requestTitle }}</span>
                 <span
                   class="rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase"
                   :class="statusClass(request.status)"
@@ -259,10 +207,10 @@ function priorityLabel(priority: QueuePriority) {
                 </span>
               </div>
               <span class="text-muted-foreground line-clamp-2 w-[260px] whitespace-break-spaces text-xs">
-                {{ request.teaser }}
+                {{ request.details }}
               </span>
               <span class="text-muted-foreground text-[11px] uppercase tracking-wide">
-                {{ request.id }} • {{ priorityLabel(request.priority) }} priority
+                {{ request.id }} • Priority {{ priorityLabel(request.priorityScore) }}
               </span>
             </RouterLink>
             <div
