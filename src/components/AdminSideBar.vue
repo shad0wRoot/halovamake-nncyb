@@ -12,6 +12,7 @@ import { AlertTriangle, CheckCheck, Command, ListChecks } from "lucide-vue-next"
 import { computed, h, onMounted, ref } from "vue"
 import { RouterLink } from "vue-router"
 import NavUser from "@/components/NavUser.vue"
+import { getAuthUser } from "@/lib/authSession"
 import { useAdminRequestsStore } from "@/stores/adminRequests"
 import { Label } from "@/components/ui/label"
 import {
@@ -36,11 +37,6 @@ const props = withDefaults(defineProps<SidebarProps>(), {
 type QueueState = "pending" | "appealed" | "approved" | "denied"
 
 const data = {
-  user: {
-    name: "Admin Team",
-    email: "admin@halovamake.com",
-    avatar: "/avatars/shadcn.jpg",
-  },
   navMain: [
     {
       title: "Request Queue",
@@ -62,6 +58,15 @@ const data = {
     },
   ],
 }
+
+const user = computed(() => {
+  const authUser = getAuthUser()
+  return {
+    name: authUser?.fullName || authUser?.name || authUser?.email || "Admin",
+    email: authUser?.email || "Not signed in",
+    avatar: "",
+  }
+})
 
 const activeItem = ref(data.navMain[0])
 const onlyHighPriority = ref(false)
@@ -174,7 +179,7 @@ function priorityLabel(priorityScore: number) {
       </SidebarContent>
       <SidebarFooter class="p-2">
         <NavUser
-          :user="data.user"
+          :user="user"
           compact
           account-to="/admin/account"
           settings-to="/admin/settings"

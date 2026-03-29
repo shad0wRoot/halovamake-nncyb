@@ -51,6 +51,18 @@ defineProps<{
 }>()
 
 const { isMobile } = useSidebar()
+
+function initials(value: string) {
+  const cleaned = value.trim()
+  if (!cleaned)
+    return 'U'
+
+  const parts = cleaned.split(/\s+/).filter(Boolean)
+  if (parts.length === 1)
+    return parts[0].slice(0, 2).toUpperCase()
+
+  return `${parts[0][0] ?? ''}${parts[1][0] ?? ''}`.toUpperCase()
+}
 </script>
 
 <template>
@@ -68,7 +80,7 @@ const { isMobile } = useSidebar()
             <Avatar class="h-8 w-8 rounded-lg">
               <AvatarImage :src="user.avatar" :alt="user.name" />
               <AvatarFallback class="rounded-lg">
-                CN
+                {{ initials(user.name) }}
               </AvatarFallback>
             </Avatar>
             <div :class="compact ? 'hidden' : 'grid flex-1 text-left text-sm leading-tight'">
@@ -91,7 +103,7 @@ const { isMobile } = useSidebar()
               <Avatar class="h-8 w-8 rounded-lg">
                 <AvatarImage :src="user.avatar" :alt="user.name" />
                 <AvatarFallback class="rounded-lg">
-                  CN
+                  {{ initials(user.name) }}
                 </AvatarFallback>
               </Avatar>
               <div class="grid flex-1 text-left text-sm leading-tight">

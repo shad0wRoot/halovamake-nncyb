@@ -70,8 +70,43 @@ const submitError = ref('')
 const draftMessage = ref('')
 
 function saveDraft() {
-  localStorage.setItem(DRAFT_KEY, JSON.stringify(form.values))
-  draftMessage.value = `Draft saved at ${new Date().toLocaleTimeString()}`
+  void saveDraftToBackend()
+}
+
+async function saveDraftToBackend() {
+  submitError.value = ''
+  submitMessage.value = ''
+
+  const values = form.values
+  const ownerEmail = getActiveEmail() || values.contactEmail?.toLowerCase() || ''
+  const fallbackEmail = ownerEmail || 'draft@nncyb.local'
+
+  try {
+    await createRequest({
+      ownerEmail: ownerEmail || fallbackEmail,
+      requestTitle: values.requestTitle?.trim() || 'Untitled Draft',
+      requester: values.fullName?.trim() || 'Draft Author',
+      role: values.role?.trim() || 'other',
+      companyName: values.companyName?.trim() || '',
+      companyLocation: values.companyLocation?.trim() || '',
+      companyType: values.companyType?.trim() || '',
+      contactEmail: values.contactEmail?.trim() || fallbackEmail,
+      contactPhone: values.contactPhone?.trim() || '',
+      contactLinkedIn: values.contactLinkedIn?.trim() || '',
+      website: values.website?.trim() || '',
+      details: values.description?.trim() || 'Draft in progress.',
+      status: 'draft',
+    })
+
+    localStorage.setItem(DRAFT_KEY, JSON.stringify(form.values))
+    draftMessage.value = 'Draft saved to Drafts.'
+  }
+  catch (error) {
+    draftMessage.value = ''
+    submitError.value = error instanceof Error
+      ? error.message
+      : 'Saving draft failed. Please try again.'
+  }
 }
 
 onMounted(() => {

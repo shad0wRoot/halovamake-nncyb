@@ -8,7 +8,7 @@ import axios from "axios"
 import { ref } from "vue"
 import { getAuthToken } from "@/lib/authSession"
 
-export type DecisionState = "pending" | "approved" | "denied" | "appealed"
+export type DecisionState = "draft" | "pending" | "approved" | "denied" | "appealed"
 
 export interface AdminRequest {
   id: string
@@ -44,6 +44,7 @@ interface CreateAdminRequestInput {
   contactLinkedIn?: string
   website?: string
   details: string
+  status?: "pending" | "draft"
 }
 
 interface UpdateRequestBody {
@@ -150,15 +151,21 @@ export async function createRequest(input: CreateAdminRequestInput) {
     contactLinkedIn: input.contactLinkedIn,
     website: input.website,
     details: input.details,
+    status: input.status ?? "pending",
   }
 
-  const response = await axios.post("/api/requests", payload, {
-    headers: authHeaders(),
-  })
-  const created = normalizeRequest((response.data as { data?: Record<string, unknown> }).data ?? (response.data as Record<string, unknown>))
+  try {
+    const response = await axios.post("/api/requests", payload, {
+      headers: authHeaders(),
+    })
+    const created = normalizeRequest((response.data as { data?: Record<string, unknown> }).data ?? (response.data as Record<string, unknown>))
 
-  requests.value = [created, ...requests.value]
-  return created
+    requests.value = [created, ...requests.value]
+    return created
+  }
+  catch (error) {
+    throw new Error(extractErrorMessage(error))
+  }
 }
 
 async function patchRequest(id: string, body: UpdateRequestBody) {
@@ -172,6 +179,18 @@ async function patchRequest(id: string, body: UpdateRequestBody) {
       return request
     return updated
   })
+}
+
+export async function deleteRequest(id: string) {
+  try {
+    await axios.delete(`/api/requests/${id}`, {
+      headers: authHeaders(),
+    })
+    requests.value = requests.value.filter(request => request.id !== id)
+  }
+  catch (error) {
+    throw new Error(extractErrorMessage(error))
+  }
 }
 
 export async function updateRequestPriority(id: string, priorityScore: number) {
@@ -190,6 +209,7 @@ export function useAdminRequestsStore() {
     errorMessage,
     fetchRequests,
     createRequest,
+    deleteRequest,
     updateRequestDecision,
     updateRequestPriority,
   }

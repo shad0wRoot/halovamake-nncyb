@@ -44,6 +44,28 @@ router.get("/", requireAuth, async (req: AuthenticatedRequest, res) => {
     appealMessage: "",
   }));
 
+
+router.delete("/:id", requireAuth, async (req: AuthenticatedRequest, res) => {
+  const authUser = req.authUser;
+  if (!authUser) {
+    return res.status(401).json({ status: "error", message: "Unauthorized" });
+  }
+
+  const { id } = req.params;
+  const doc = await RequestModel.findById(id).lean();
+  if (!doc) {
+    return res.status(404).json({ status: "error", message: "Request not found" });
+  }
+
+  const isAdmin = authUser.roles?.includes("admin") || authUser.roles?.includes("ADMIN");
+  const isOwner = doc.ownerEmail === authUser.email;
+  if (!isAdmin && !isOwner) {
+    return res.status(403).json({ status: "error", message: "Forbidden" });
+  }
+
+  await RequestModel.findByIdAndDelete(id);
+  return res.json({ status: "ok" });
+});
   return res.json({ status: "ok", data });
 });
 
@@ -66,6 +88,7 @@ router.post("/", requireAuth, validate(createRequestSchema), async (req: Authent
     contactLinkedIn?: string;
     website?: string;
     details: string;
+    status?: "pending" | "draft";
   };
 
   const ownerEmail = payload.ownerEmail || authUser.email;
@@ -84,7 +107,7 @@ router.post("/", requireAuth, validate(createRequestSchema), async (req: Authent
     linkedIn: payload.contactLinkedIn || "",
     website: payload.website || "",
     reviewer: "",
-    status: "PENDING",
+    status: (payload.status || "pending").toUpperCase(),
   });
 
   return res.status(201).json({
@@ -163,6 +186,28 @@ router.patch("/:id", requireAuth, validate(patchRequestSchema), async (req: Auth
       appealMessage: "",
     },
   });
+});
+router.delete("/:id", requireAuth, async (req: AuthenticatedRequest, res) => {
+  const authUser = req.authUser;
+  if (!authUser) {
+    return res.status(401).json({ status: "error", message: "Unauthorized" });
+  }
+
+  const { id } = req.params;
+  const doc = await RequestModel.findById(id).lean();
+  if (!doc) {
+    return res.status(404).json({ status: "error", message: "Request not found" });
+  }
+
+  const isAdmin = authUser.roles?.includes("admin") || authUser.roles?.includes("ADMIN");
+  const isOwner = doc.ownerEmail === authUser.email;
+
+  if (!isAdmin && !isOwner) {
+    return res.status(403).json({ status: "error", message: "Forbidden" });
+  }
+
+  await RequestModel.findByIdAndDelete(id);
+  return res.json({ status: "ok" });
 });
 
 export default router;

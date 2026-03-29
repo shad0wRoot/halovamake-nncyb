@@ -7,6 +7,7 @@ SPDX-License-Identifier: LicenseRef-SSPL-1.0
 -->
 
 <script setup lang="ts">
+import { computed } from 'vue'
 import {
   IconDashboard,
   IconFileDescription,
@@ -29,13 +30,9 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from '@/components/ui/sidebar'
+import { getAuthUser } from '@/lib/authSession'
 
 const data = {
-  user: {
-    name: "shadcn",
-    email: "m@example.com",
-    avatar: "/avatars/shadcn.jpg",
-  },
   navMain: [
     {
       title: "Dashboard",
@@ -59,6 +56,15 @@ const data = {
     },
   ],
 }
+
+const user = computed(() => {
+  const authUser = getAuthUser()
+  return {
+    name: authUser?.fullName || authUser?.name || authUser?.email || 'Guest',
+    email: authUser?.email || 'Not signed in',
+    avatar: '',
+  }
+})
 </script>
 
 <template>
@@ -82,7 +88,7 @@ const data = {
       <NavMain :items="data.navMain" />
     </SidebarContent>
     <SidebarFooter>
-      <NavUser :user="data.user" />
+      <NavUser :user="user" />
     </SidebarFooter>
   </Sidebar>
 </template>

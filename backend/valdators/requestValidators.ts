@@ -19,6 +19,7 @@ export const createRequestSchema = z.object({
   contactLinkedIn: z.string().max(300).optional().default(""),
   website: z.string().max(300).optional().default(""),
   details: z.string().min(10).max(3000),
+  status: z.enum(["pending", "draft"]).optional().default("pending"),
 });
 
 export const patchRequestSchema = z
