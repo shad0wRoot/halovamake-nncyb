@@ -34,6 +34,16 @@ const optionalUrl = z.union([
 ])
 
 const DRAFT_KEY = 'nncyb-create-request-draft'
+const ROLE_OPTIONS = [
+  'investor-lp',
+  'investor-gp',
+  'government',
+  'media',
+  'freelancer',
+  'startup',
+  'portfolio-startup',
+  'other',
+] as const
 
 const formSchema = toTypedSchema(z.object({
   fullName: z.string().trim().min(2, 'Please enter your full name').max(100),
@@ -120,10 +130,14 @@ onMounted(() => {
 
   try {
     const draft = JSON.parse(raw) as Record<string, string>
+    const normalizedRole = ROLE_OPTIONS.includes(String(draft.role) as typeof ROLE_OPTIONS[number])
+      ? String(draft.role)
+      : ''
     form.resetForm({
       values: {
         ...form.values,
         ...draft,
+        role: normalizedRole,
       },
     })
     draftMessage.value = 'Draft restored.'
@@ -288,7 +302,7 @@ const onSubmit = form.handleSubmit(async (values) => {
                     class="border-input bg-transparent ring-offset-background focus-visible:ring-ring flex h-9 w-full rounded-md border px-3 py-1 text-sm shadow-xs outline-none focus-visible:ring-1"
                     v-bind="componentField"
                   >
-                    <option disabled value="">Select role</option>
+                    <option value="" hidden>Select role</option>
                     <option value="investor-lp">Investor LP</option>
                     <option value="investor-gp">Investor GP</option>
                     <option value="government">Government</option>

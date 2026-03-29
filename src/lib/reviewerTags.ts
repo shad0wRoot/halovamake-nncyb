@@ -8,7 +8,6 @@ const STORAGE_PREFIX = "nncyb-reviewer-tags"
 
 export const DEFAULT_REVIEW_TAGS = [
   "freelancer",
-  "influencer",
   "startup",
   "portfolio-startup",
   "media",
@@ -29,10 +28,6 @@ export function requestTag(request: AdminRequest) {
   const primary = normalizeTag(request.role)
   if (primary && primary !== "unknown")
     return primary
-
-  const fallback = normalizeTag(request.companyType)
-  if (fallback && fallback !== "not-provided")
-    return fallback
 
   return "other"
 }

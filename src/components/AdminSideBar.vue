@@ -217,7 +217,7 @@ function priorityLabel(priorityScore: number) {
     <!--  We disable collapsible and let it fill remaining space -->
     <Sidebar
       collapsible="none"
-      class="hidden w-[min(300px,24vw)] shrink-0 border-r lg:w-[min(320px,24vw)] xl:w-[340px] md:flex"
+      class="hidden w-[calc(var(--sidebar-width)-var(--sidebar-width-icon)-1px)] shrink-0 border-r md:flex"
     >
       <SidebarHeader class="gap-3.5 border-b p-4">
         <div class="flex w-full items-center justify-between">
@@ -265,6 +265,13 @@ function priorityLabel(priorityScore: number) {
                 >
                   {{ request.status }}
                 </span>
+              </div>
+              <div
+                v-if="request.activeReviewerEmail"
+                class="text-xs font-medium text-amber-700"
+                :title="request.activeReviewerEmail"
+              >
+                Taken by {{ request.activeReviewerName || request.activeReviewerEmail }}
               </div>
               <span class="text-muted-foreground line-clamp-2 w-full whitespace-break-spaces text-xs">
                 {{ request.details }}

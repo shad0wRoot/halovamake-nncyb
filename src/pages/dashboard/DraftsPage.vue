@@ -51,6 +51,16 @@ import { Button } from '@/components/ui/button'
 import { useAdminRequestsStore } from '@/stores/adminRequests'
 
 const DRAFT_KEY = 'nncyb-create-request-draft'
+const ROLE_OPTIONS = [
+  'investor-lp',
+  'investor-gp',
+  'government',
+  'media',
+  'freelancer',
+  'startup',
+  'portfolio-startup',
+  'other',
+] as const
 
 const router = useRouter()
 const { requests, isLoading, fetchRequests, deleteRequest } = useAdminRequestsStore()
@@ -93,12 +103,16 @@ function openDraft(id: string) {
   if (!target)
     return
 
+  const normalizedRole = ROLE_OPTIONS.includes(String(target.role) as typeof ROLE_OPTIONS[number])
+    ? String(target.role)
+    : ''
+
   localStorage.setItem(DRAFT_KEY, JSON.stringify({
     fullName: target.requester,
     companyName: target.companyName,
     companyLocation: target.companyLocation,
     companyType: target.companyType,
-    role: target.role,
+    role: normalizedRole,
     requestTitle: target.requestTitle,
     description: target.details,
     contactEmail: target.contactEmail,

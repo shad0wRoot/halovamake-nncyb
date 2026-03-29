@@ -21,7 +21,7 @@ const { requests, isLoading, fetchRequests } = useAdminRequestsStore()
 const currentUser = getAuthUser()
 
 const userRequests = computed(() =>
-  requests.value.filter(req => req.ownerEmail === currentUser?.email)
+  requests.value.filter(req => req.ownerEmail === currentUser?.email && req.status !== "draft")
 )
 
 const data = computed(() =>

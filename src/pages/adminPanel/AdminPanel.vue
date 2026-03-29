@@ -270,8 +270,10 @@ async function toggleAssignment() {
 
     actionError.value = ""
   }
-  catch {
-    actionError.value = "Failed to update reviewer ownership."
+  catch (error) {
+    actionError.value = error instanceof Error
+      ? error.message
+      : "Failed to update reviewer ownership."
   }
   finally {
     isUpdatingAssignment.value = false
@@ -282,7 +284,7 @@ async function toggleAssignment() {
 <template>
   <SidebarProvider
     :style="{
-      '--sidebar-width': 'clamp(240px, 23vw, 320px)',
+      '--sidebar-width': 'clamp(280px, 24vw, 360px)',
     }"
   >
     <AppSidebar />

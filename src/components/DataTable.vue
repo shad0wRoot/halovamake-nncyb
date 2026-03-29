@@ -59,9 +59,15 @@ import {
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 
 import { Label } from '@/components/ui/label'
 import {
@@ -105,6 +111,8 @@ const sorting = ref<SortingState>([])
 const columnFilters = ref<ColumnFiltersState>([])
 const columnVisibility = ref<VisibilityState>({})
 const rowSelection = ref({})
+const viewDialogOpen = ref(false)
+const viewedRequest = ref<TableData | null>(null)
 
 const columns: ColumnDef<TableData>[] = [
   {
@@ -146,12 +154,15 @@ const columns: ColumnDef<TableData>[] = [
     header: "Status",
     cell: ({ row }) => {
       const status = row.getValue("status") as string
-      const done = status === "Approved"
+      const approved = status === "Approved"
+      const denied = status === "Denied"
       return h("div", { class: "flex items-center gap-2" }, [
-        done
+        approved
           ? h(IconCircleCheckFilled, { class: "h-4 w-4 text-emerald-500" })
-          : h(IconLoader, { class: "h-4 w-4 animate-spin text-muted-foreground" }),
-        h("span", {}, status),
+          : denied
+            ? h("span", { class: "h-2.5 w-2.5 rounded-full bg-rose-500" })
+            : h(IconLoader, { class: "h-4 w-4 animate-spin text-muted-foreground" }),
+        h("span", { class: denied ? "text-rose-700 font-medium" : "" }, status),
       ])
     },
   },
@@ -206,7 +217,7 @@ const columns: ColumnDef<TableData>[] = [
   },
   {
     id: "actions",
-    cell: () => h(DropdownMenu, {}, {
+    cell: ({ row }) => h(DropdownMenu, {}, {
       default: () => [
         h(DropdownMenuTrigger, { asChild: true }, {
           default: () => h(Button, {
@@ -221,11 +232,13 @@ const columns: ColumnDef<TableData>[] = [
         }),
         h(DropdownMenuContent, { align: "end" }, {
           default: () => [
-            h(DropdownMenuItem, {}, () => "Edit"),
-            h(DropdownMenuItem, {}, () => "Make a copy"),
-            h(DropdownMenuItem, {}, () => "Favorite"),
-            h(DropdownMenuSeparator, {}),
-            h(DropdownMenuItem, {}, () => "Delete"),
+            h(DropdownMenuItem, {
+              onSelect: (event: Event) => {
+                event.preventDefault()
+                viewedRequest.value = row.original
+                viewDialogOpen.value = true
+              },
+            }, () => "View details"),
           ],
         }),
       ],
@@ -431,4 +444,20 @@ const table = useVueTable({
       <div class="aspect-video w-full flex-1 rounded-lg border border-dashed" />
     </TabsContent>
   </Tabs>
+  <Dialog v-model:open="viewDialogOpen">
+    <DialogContent class="sm:max-w-xl">
+      <DialogHeader>
+        <DialogTitle>{{ viewedRequest?.title || "Request details" }}</DialogTitle>
+        <DialogDescription>Read-only request summary.</DialogDescription>
+      </DialogHeader>
+      <div v-if="viewedRequest" class="grid gap-3 text-sm">
+        <div><span class="text-muted-foreground">Status:</span> {{ viewedRequest.status }}</div>
+        <div><span class="text-muted-foreground">Company Type:</span> {{ viewedRequest.companyType }}</div>
+        <div><span class="text-muted-foreground">Priority:</span> {{ viewedRequest.priority }}</div>
+        <div><span class="text-muted-foreground">Submitted:</span> {{ viewedRequest.submittedAt }}</div>
+        <div><span class="text-muted-foreground">Reviewed By:</span> {{ viewedRequest.reviewer }}</div>
+        <div><span class="text-muted-foreground">Decision Note:</span> {{ viewedRequest.decision }}</div>
+      </div>
+    </DialogContent>
+  </Dialog>
 </template>
