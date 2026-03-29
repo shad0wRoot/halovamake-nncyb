@@ -117,7 +117,7 @@ async function login() {
               </Button>
               <FieldDescription class="text-center">
                 Don't have an account?
-                <router-link to="/signup">
+                <router-link to="/signup" class="auth-link ml-1">
                   Sign up
                 </router-link>
               </FieldDescription>
@@ -127,8 +127,8 @@ async function login() {
       </CardContent>
     </Card>
     <FieldDescription class="px-6 text-center">
-      By clicking continue, you agree to our <a href="#">Terms of Service</a>
-      and <a href="#">Privacy Policy</a>.
+      By clicking continue, you agree to our <a href="#" class="auth-link">Terms of Service</a>
+      and <a href="#" class="auth-link">Privacy Policy</a>.
     </FieldDescription>
   </div>
 </template>

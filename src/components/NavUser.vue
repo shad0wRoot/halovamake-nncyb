@@ -44,6 +44,10 @@ interface User {
 
 defineProps<{
   user: User
+  compact?: boolean
+  accountTo?: string
+  settingsTo?: string
+  loginTo?: string
 }>()
 
 const { isMobile } = useSidebar()
@@ -55,22 +59,25 @@ const { isMobile } = useSidebar()
       <DropdownMenu>
         <DropdownMenuTrigger as-child>
           <SidebarMenuButton
-            size="lg"
-            class="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
+            :size="compact ? 'sm' : 'lg'"
+            :class="[
+              'data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground',
+              compact ? 'justify-center p-0' : '',
+            ]"
           >
-            <Avatar class="h-8 w-8 rounded-lg grayscale">
+            <Avatar class="h-8 w-8 rounded-lg">
               <AvatarImage :src="user.avatar" :alt="user.name" />
               <AvatarFallback class="rounded-lg">
                 CN
               </AvatarFallback>
             </Avatar>
-            <div class="grid flex-1 text-left text-sm leading-tight">
+            <div :class="compact ? 'hidden' : 'grid flex-1 text-left text-sm leading-tight'">
               <span class="truncate font-medium">{{ user.name }}</span>
               <span class="text-muted-foreground truncate text-xs">
                 {{ user.email }}
               </span>
             </div>
-            <IconDotsVertical class="ml-auto size-4" />
+            <IconDotsVertical v-if="!compact" class="ml-auto size-4" />
           </SidebarMenuButton>
         </DropdownMenuTrigger>
         <DropdownMenuContent
@@ -98,13 +105,13 @@ const { isMobile } = useSidebar()
           <DropdownMenuSeparator />
           <DropdownMenuGroup>
             <DropdownMenuItem as-child>
-              <RouterLink to="/account">
+              <RouterLink :to="accountTo ?? '/account'">
                 <IconUserCircle />
                 Account
               </RouterLink>
             </DropdownMenuItem>
             <DropdownMenuItem as-child>
-              <RouterLink to="/settings">
+              <RouterLink :to="settingsTo ?? '/settings'">
                 <IconSettings />
                 Settings
               </RouterLink>
@@ -112,7 +119,7 @@ const { isMobile } = useSidebar()
           </DropdownMenuGroup>
           <DropdownMenuSeparator />
           <DropdownMenuItem as-child>
-            <RouterLink to="/login">
+            <RouterLink :to="loginTo ?? '/login'">
               <IconLogout />
               Log out
             </RouterLink>

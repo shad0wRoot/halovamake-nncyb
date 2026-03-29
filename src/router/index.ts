@@ -82,10 +82,22 @@ const router = createRouter({
       ],
     },
     {
-      path: '/test',
-      name: 'test',
-      component: () => import('../pages/NotFoundPage.vue'),
+      path: '/admin',
+      name: 'adminPanel',
+      component: () => import('../pages/adminPanel/AdminPanel.vue'),
       meta: { auth: false },     // requires login — redirects to /login if not authed TODO: set to true when auth is implemented
+    },
+    {
+      path: '/admin/settings',
+      name: 'adminSettings',
+      component: () => import('../pages/adminPanel/AdminSettingsPage.vue'),
+      meta: { auth: false },
+    },
+    {
+      path: '/admin/account',
+      name: 'adminAccount',
+      component: () => import('../pages/adminPanel/AdminAccountPage.vue'),
+      meta: { auth: false },
     },
     {
       path: '/:pathMatch(.*)*',
