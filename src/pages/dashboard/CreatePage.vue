@@ -302,7 +302,7 @@ const onSubmit = form.handleSubmit(async (values) => {
                     class="border-input bg-transparent ring-offset-background focus-visible:ring-ring flex h-9 w-full rounded-md border px-3 py-1 text-sm shadow-xs outline-none focus-visible:ring-1"
                     v-bind="componentField"
                   >
-                    <option value="" hidden>Select role</option>
+                    <option value="">Select role</option>
                     <option value="investor-lp">Investor LP</option>
                     <option value="investor-gp">Investor GP</option>
                     <option value="government">Government</option>
