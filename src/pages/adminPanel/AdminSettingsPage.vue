@@ -81,13 +81,13 @@ function clearAll() {
         <Badge variant="secondary">Reviewer configuration</Badge>
       </div>
 
-      <div class="rounded-3xl border bg-card p-6 shadow-xs lg:p-10">
+      <div class="rounded-3xl border bg-gradient-to-br from-card to-muted/30 p-6 shadow-xs lg:p-10">
         <h1 class="text-foreground text-3xl font-semibold tracking-tight">Reviewer Settings</h1>
         <p class="text-muted-foreground mt-2 text-base">
           Configure which request tags you want to focus on in moderation.
         </p>
 
-        <div class="mt-8 mx-auto w-full max-w-[980px] rounded-2xl border bg-background/60 p-6 lg:p-8">
+        <div class="mt-8 mx-auto w-full max-w-[760px] rounded-2xl border border-border/70 bg-muted/40 p-6 lg:p-8">
           <div class="flex flex-wrap items-center justify-between gap-3">
             <div>
               <p class="text-lg font-semibold">Preferred Tags</p>
@@ -111,7 +111,7 @@ function clearAll() {
               :key="tag"
               type="button"
               class="rounded-full border px-4 py-2.5 text-base transition-colors"
-              :class="isSelected(tag) ? 'border-primary bg-primary text-primary-foreground' : 'border-border bg-background hover:bg-accent'"
+              :class="isSelected(tag) ? 'border-primary bg-primary text-primary-foreground' : 'border-border bg-background/80 hover:bg-accent'"
               @click="toggleTag(tag)"
             >
               {{ tagLabel(tag) }}

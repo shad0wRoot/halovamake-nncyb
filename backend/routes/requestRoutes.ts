@@ -18,7 +18,7 @@ function hasReviewerRole(authUser: NonNullable<AuthenticatedRequest["authUser"]>
   return roles.some(role => {
     const normalized = role.toUpperCase();
     return normalized === "REVIEWER" || normalized === "ADMIN";
-  }) || authUser.email.toLowerCase() === "admin@admin.com";
+  })
 }
 
 function hasAdminRole(authUser: NonNullable<AuthenticatedRequest["authUser"]>) {

@@ -12,8 +12,11 @@ export const description = "A login page with a muted background color."
 
 <script setup lang="ts">
 import '@/assets/main.css';
+import router from '@/router';
 import LoginForm from "@/views/LoginView.vue";
+
 </script>
+
 
 <template>
   <div class="bg-muted flex min-h-svh flex-col items-center justify-center gap-6 p-6 md:p-10">

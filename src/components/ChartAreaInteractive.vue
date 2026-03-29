@@ -77,7 +77,7 @@ const chartConfig = ref({
   },
 })
 
-const timeRange = ref("90d")
+const timeRange = ref("90m")
 const chartData = computed<DataPoint[]>(() => {
   const sorted = [...userRequests.value].sort((a, b) =>
     new Date(a.submittedAt).getTime() - new Date(b.submittedAt).getTime(),
@@ -90,7 +90,7 @@ const chartData = computed<DataPoint[]>(() => {
   let denied = 0
   let pending = 0
 
-  return sorted.map((request) => {
+  return sorted.map((request, index) => {
     if (request.status === "approved")
       accepted += 1
     else if (request.status === "denied")
@@ -98,8 +98,12 @@ const chartData = computed<DataPoint[]>(() => {
     else
       pending += 1
 
+    // Demo mode timeline: spread request points by 5-minute intervals.
+    const minutesAgo = (sorted.length - 1 - index) * 5
+    const pointDate = new Date(Date.now() - minutesAgo * 60_000)
+
     return {
-      date: new Date(`${request.submittedAt}T00:00:00`),
+      date: pointDate,
       accepted,
       pending,
       denied,
@@ -118,15 +122,15 @@ const filterRange = computed(() => {
   return chartData.value.filter((item) => {
     const date = new Date(item.date)
     const referenceDate = new Date(latestEntry.date)
-    let daysToSubtract = 90
-    if (timeRange.value === "30d") {
-      daysToSubtract = 30
+    let minutesToSubtract = 90
+    if (timeRange.value === "30m") {
+      minutesToSubtract = 30
     }
-    else if (timeRange.value === "7d") {
-      daysToSubtract = 7
+    else if (timeRange.value === "7m") {
+      minutesToSubtract = 7
     }
     const startDate = new Date(referenceDate)
-    startDate.setDate(startDate.getDate() - daysToSubtract)
+    startDate.setMinutes(startDate.getMinutes() - minutesToSubtract)
     return date >= startDate
   })
 })
@@ -147,7 +151,7 @@ type Data = DataPoint
       <div class="grid flex-1 gap-1">
         <CardTitle>User Request Outcomes</CardTitle>
         <CardDescription>
-          Cumulative approved, pending, and denied requests
+          Demo timeline in minutes for approved, pending, and denied requests
         </CardDescription>
       </div>
       <Select v-model="timeRange">
@@ -155,17 +159,17 @@ type Data = DataPoint
           class="hidden w-[160px] rounded-lg sm:ml-auto sm:flex"
           aria-label="Select a value"
         >
-          <SelectValue placeholder="Last 3 months" />
+          <SelectValue placeholder="Last 90 minutes" />
         </SelectTrigger>
         <SelectContent class="rounded-xl">
-          <SelectItem value="90d" class="rounded-lg">
-            Last 3 months
+          <SelectItem value="90m" class="rounded-lg">
+            Last 90 minutes
           </SelectItem>
-          <SelectItem value="30d" class="rounded-lg">
-            Last 30 days
+          <SelectItem value="30m" class="rounded-lg">
+            Last 30 minutes
           </SelectItem>
-          <SelectItem value="7d" class="rounded-lg">
-            Last 7 days
+          <SelectItem value="7m" class="rounded-lg">
+            Last 7 minutes
           </SelectItem>
         </SelectContent>
       </Select>
@@ -207,9 +211,9 @@ type Data = DataPoint
             :num-ticks="6"
             :tick-format="(d: number, index: number) => {
               const date = new Date(d)
-              return date.toLocaleDateString('en-US', {
-                month: 'short',
-                day: 'numeric',
+              return date.toLocaleTimeString('en-US', {
+                hour: '2-digit',
+                minute: '2-digit',
               })
             }"
           />
@@ -223,9 +227,9 @@ type Data = DataPoint
           <ChartCrosshair
             :template="componentToString(chartConfig, ChartTooltipContent, {
               labelFormatter: (d) => {
-                return new Date(d).toLocaleDateString('en-US', {
-                  month: 'short',
-                  day: 'numeric',
+                return new Date(d).toLocaleTimeString('en-US', {
+                  hour: '2-digit',
+                  minute: '2-digit',
                 })
               },
             })"
