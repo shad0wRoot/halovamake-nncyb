@@ -85,7 +85,6 @@ async function signup() {
       id: userFromBody.id,
       email: userFromBody.email,
       fullName: userFromBody.fullName || fullName.value,
-      name: userFromBody.name,
       role: effectiveRole,
     })
     axios.defaults.headers.common.Authorization = `Bearer ${token}`
