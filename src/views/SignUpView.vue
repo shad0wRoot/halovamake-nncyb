@@ -75,8 +75,6 @@ async function signup() {
 
     if (!token)
       throw new Error('Missing auth token after sign up.')
-
-    const userFromBody = (loginResponse.data as { user?: { email?: string, fullName?: string, name?: string, role?: string, roles?: string[] } }).user
     const userFromBody = (loginResponse.data as { user?: { id?: string, email?: string, fullName?: string, role?: string, roles?: string[] } }).user
     if (!userFromBody?.email)
       throw new Error('Could not resolve signed up user profile.')
@@ -88,7 +86,6 @@ async function signup() {
       email: userFromBody.email,
       fullName: userFromBody.fullName || fullName.value,
       name: userFromBody.name,
-      fullName: userFromBody.fullName,
       role: effectiveRole,
     })
     axios.defaults.headers.common.Authorization = `Bearer ${token}`
