@@ -108,6 +108,7 @@ function openDraft(id: string) {
     : ''
 
   localStorage.setItem(DRAFT_KEY, JSON.stringify({
+    __draftId: target.id,
     fullName: target.requester,
     companyName: target.companyName,
     companyLocation: target.companyLocation,

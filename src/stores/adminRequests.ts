@@ -53,8 +53,20 @@ interface CreateAdminRequestInput {
 }
 
 interface UpdateRequestBody {
+  ownerEmail?: string
+  requestTitle?: string
+  requester?: string
+  role?: string
+  companyName?: string
+  companyLocation?: string
+  companyType?: string
+  contactEmail?: string
+  contactPhone?: string
+  contactLinkedIn?: string
+  website?: string
+  details?: string
   priorityScore?: number
-  status?: "approved" | "denied"
+  status?: "approved" | "denied" | "pending" | "draft"
   decisionReason?: string
   assignmentAction?: "take" | "release"
 }
@@ -231,6 +243,33 @@ export async function updateRequestDecision(id: string, status: "approved" | "de
   await patchRequest(id, { status, decisionReason })
 }
 
+export async function updateDraft(id: string, input: CreateAdminRequestInput) {
+  const priorityScore = input.priorityScore ?? derivePriorityScore(
+    input.role,
+    input.companyType,
+    input.requestTitle,
+    input.details,
+    input.companyName,
+  )
+
+  await patchRequest(id, {
+    ownerEmail: input.ownerEmail,
+    requestTitle: input.requestTitle,
+    requester: input.requester,
+    role: input.role,
+    companyName: input.companyName,
+    companyLocation: input.companyLocation,
+    companyType: input.companyType,
+    contactEmail: input.contactEmail,
+    contactPhone: input.contactPhone,
+    contactLinkedIn: input.contactLinkedIn,
+    website: input.website,
+    details: input.details,
+    status: input.status ?? "draft",
+    priorityScore,
+  })
+}
+
 export async function takeRequestOwnership(id: string) {
   await patchRequest(id, { assignmentAction: "take" })
 }
@@ -248,6 +287,7 @@ export function useAdminRequestsStore() {
     fetchRequests,
     createRequest,
     deleteRequest,
+    updateDraft,
     updateRequestDecision,
     updateRequestPriority,
     takeRequestOwnership,

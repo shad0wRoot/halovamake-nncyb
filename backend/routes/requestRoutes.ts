@@ -50,6 +50,23 @@ function hasAdminRole(authUser: NonNullable<AuthenticatedRequest["authUser"]>) {
   return roles.some(role => role.toUpperCase() === "ADMIN");
 }
 
+function isDraftContentUpdate(payload: Record<string, unknown>) {
+  return [
+    "ownerEmail",
+    "requestTitle",
+    "requester",
+    "role",
+    "companyName",
+    "companyLocation",
+    "companyType",
+    "contactEmail",
+    "contactPhone",
+    "contactLinkedIn",
+    "website",
+    "details",
+  ].some(key => typeof payload[key] === "string");
+}
+
 function serializeRequest(doc: {
   _id: unknown;
   ownerEmail: string;
@@ -199,14 +216,28 @@ router.patch("/:id", requireAuth, validate(patchRequestSchema), async (req: Auth
 
   const { id } = req.params;
   const payload = req.body as {
+    ownerEmail?: string;
+    requestTitle?: string;
+    requester?: string;
+    role?: string;
+    companyName?: string;
+    companyLocation?: string;
+    companyType?: string;
+    contactEmail?: string;
+    contactPhone?: string;
+    contactLinkedIn?: string;
+    website?: string;
+    details?: string;
     priorityScore?: number;
-    status?: "approved" | "denied";
+    status?: "approved" | "denied" | "pending" | "draft";
     decisionReason?: string;
     assignmentAction?: "take" | "release";
   };
 
-  const isReviewUpdate = typeof payload.priorityScore === "number"
-    || Boolean(payload.status)
+  const contentUpdate = isDraftContentUpdate(payload);
+  const isReviewUpdate = (typeof payload.priorityScore === "number" && !contentUpdate && payload.status !== "pending" && payload.status !== "draft")
+    || payload.status === "approved"
+    || payload.status === "denied"
     || typeof payload.decisionReason === "string"
     || Boolean(payload.assignmentAction);
   if (isReviewUpdate && !hasReviewerRole(authUser)) {
@@ -219,6 +250,62 @@ router.patch("/:id", requireAuth, validate(patchRequestSchema), async (req: Auth
   const update: Record<string, unknown> = {};
   const reviewerUser = await User.findById(authUser.id).select("fullName").lean();
   const reviewerName = reviewerUser?.fullName || authUser.email;
+
+  if (contentUpdate || payload.status === "pending" || payload.status === "draft") {
+    const existing = await RequestModel.findById(id).lean();
+    if (!existing) {
+      return res.status(404).json({ status: "error", message: "Request not found" });
+    }
+
+    const isAdmin = hasAdminRole(authUser);
+    const isOwner = existing.ownerEmail === authUser.email;
+    const isEditableDraft = String(existing.status || "").toUpperCase() === "DRAFT";
+
+    if ((!isOwner && !isAdmin) || !isEditableDraft) {
+      return res.status(403).json({
+        status: "error",
+        message: "Only the draft owner can edit this draft.",
+      });
+    }
+
+    if (typeof payload.ownerEmail === "string")
+      update.ownerEmail = payload.ownerEmail;
+    if (typeof payload.requestTitle === "string")
+      update.title = payload.requestTitle;
+    if (typeof payload.requester === "string")
+      update.fullName = payload.requester;
+    if (typeof payload.companyName === "string")
+      update.company = payload.companyName;
+    if (typeof payload.companyLocation === "string")
+      update.companyAddress = payload.companyLocation;
+    if (typeof payload.companyType === "string" || typeof payload.role === "string")
+      update.companyType = payload.companyType || payload.role || "";
+    if (typeof payload.contactEmail === "string")
+      update.email = payload.contactEmail;
+    if (typeof payload.contactPhone === "string")
+      update.phoneNumber = payload.contactPhone;
+    if (typeof payload.contactLinkedIn === "string")
+      update.linkedIn = payload.contactLinkedIn;
+    if (typeof payload.website === "string")
+      update.website = payload.website;
+    if (typeof payload.details === "string")
+      update.description = payload.details;
+
+    if (typeof payload.priorityScore === "number") {
+      update.priority = payload.priorityScore;
+    } else {
+      update.priority = derivePriorityScore(
+        String(payload.role ?? existing.companyType ?? ""),
+        String(payload.companyType ?? existing.companyType ?? ""),
+        String(payload.requestTitle ?? existing.title ?? ""),
+        String(payload.details ?? existing.description ?? ""),
+        String(payload.companyName ?? existing.company ?? ""),
+      );
+    }
+
+    if (payload.status === "pending" || payload.status === "draft")
+      update.status = payload.status.toUpperCase();
+  }
 
   if (payload.assignmentAction) {
     const existing = await RequestModel.findById(id).lean();

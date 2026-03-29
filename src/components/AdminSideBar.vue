@@ -13,6 +13,7 @@ import { computed, h, onMounted, ref, watch } from "vue"
 import { RouterLink, useRoute } from "vue-router"
 import NavUser from "@/components/NavUser.vue"
 import { getAuthUser, getDisplayName } from "@/lib/authSession"
+import { getGravatarUrl } from "@/lib/gravatar"
 import { collectAvailableTags, getReviewerSelectedTags, requestTag, saveReviewerSelectedTags, tagLabel } from "@/lib/reviewerTags"
 import { useAdminRequestsStore } from "@/stores/adminRequests"
 import { Badge } from "@/components/ui/badge"
@@ -73,7 +74,7 @@ const user = computed(() => {
   return {
     name: getDisplayName(authUser),
     email: authUser?.email || "Not signed in",
-    avatar: "",
+    avatar: getGravatarUrl(authUser?.email || "", 64),
   }
 })
 

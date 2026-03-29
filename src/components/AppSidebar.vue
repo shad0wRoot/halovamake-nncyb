@@ -31,6 +31,7 @@ import {
   SidebarMenuItem,
 } from '@/components/ui/sidebar'
 import { getAuthUser, getDisplayName } from '@/lib/authSession'
+import { getGravatarUrl } from '@/lib/gravatar'
 
 const data = {
   navMain: [
@@ -62,7 +63,7 @@ const user = computed(() => {
   return {
     name: getDisplayName(authUser),
     email: authUser?.email || 'Not signed in',
-    avatar: '',
+    avatar: getGravatarUrl(authUser?.email || '', 64),
   }
 })
 </script>

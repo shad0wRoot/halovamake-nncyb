@@ -25,13 +25,25 @@ export const createRequestSchema = z.object({
 
 export const patchRequestSchema = z
   .object({
+    ownerEmail: z.email("Invalid owner email").optional(),
+    requestTitle: z.string().min(3).max(120).optional(),
+    requester: z.string().min(2).max(100).optional(),
+    role: z.string().min(1).max(80).optional(),
+    companyName: z.string().max(120).optional(),
+    companyLocation: z.string().max(120).optional(),
+    companyType: z.string().max(80).optional(),
+    contactEmail: z.email("Invalid contact email").optional(),
+    contactPhone: z.string().max(30).optional(),
+    contactLinkedIn: z.string().max(300).optional(),
+    website: z.string().max(300).optional(),
+    details: z.string().min(10).max(3000).optional(),
     priorityScore: z.number().int().min(1).max(10).optional(),
-    status: z.enum(["approved", "denied"]).optional(),
+    status: z.enum(["approved", "denied", "pending", "draft"]).optional(),
     decisionReason: z.string().max(1000).optional(),
     assignmentAction: z.enum(["take", "release"]).optional(),
   })
   .refine((payload) => {
-    if (!payload.status)
+    if (payload.status !== "approved" && payload.status !== "denied")
       return true;
     return typeof payload.decisionReason === "string" && payload.decisionReason.trim().length > 0;
   }, {

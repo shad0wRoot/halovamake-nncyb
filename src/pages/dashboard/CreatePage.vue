@@ -83,10 +83,11 @@ const form = useForm({
   },
 })
 
-const { createRequest, fetchRequests } = useAdminRequestsStore()
+const { createRequest, fetchRequests, updateDraft } = useAdminRequestsStore()
 const submitMessage = ref('')
 const submitError = ref('')
 const draftMessage = ref('')
+const activeDraftId = ref('')
 
 async function saveDraft() {
   await saveDraftToBackend()
@@ -102,25 +103,37 @@ async function saveDraftToBackend() {
   const ownerEmail = getActiveEmail() || values.contactEmail?.toLowerCase() || ''
   const fallbackEmail = ownerEmail || 'draft@nncyb.local'
 
-  try {
-    await createRequest({
-      ownerEmail: ownerEmail || fallbackEmail,
-      requestTitle: values.requestTitle?.trim() || 'Untitled Draft',
-      requester: values.fullName?.trim() || 'Draft Author',
-      role: values.role?.trim() || 'other',
-      companyName: values.companyName?.trim() || '',
-      companyLocation: values.companyLocation?.trim() || '',
-      companyType: values.companyType?.trim() || '',
-      contactEmail: values.contactEmail?.trim() || fallbackEmail,
-      contactPhone: values.contactPhone?.trim() || '',
-      contactLinkedIn: values.contactLinkedIn?.trim() || '',
-      website: values.website?.trim() || '',
-      details: values.description?.trim() || 'Draft in progress.',
-      status: 'draft',
-    })
+  const payload = {
+    ownerEmail: ownerEmail || fallbackEmail,
+    requestTitle: values.requestTitle?.trim() || 'Untitled Draft',
+    requester: values.fullName?.trim() || 'Draft Author',
+    role: values.role?.trim() || 'other',
+    companyName: values.companyName?.trim() || '',
+    companyLocation: values.companyLocation?.trim() || '',
+    companyType: values.companyType?.trim() || '',
+    contactEmail: values.contactEmail?.trim() || fallbackEmail,
+    contactPhone: values.contactPhone?.trim() || '',
+    contactLinkedIn: values.contactLinkedIn?.trim() || '',
+    website: values.website?.trim() || '',
+    details: values.description?.trim() || 'Draft in progress.',
+    status: 'draft' as const,
+  }
 
-    localStorage.setItem(DRAFT_KEY, JSON.stringify(form.values))
+  try {
+    if (activeDraftId.value)
+      await updateDraft(activeDraftId.value, payload)
+    else {
+      const created = await createRequest(payload)
+      activeDraftId.value = created.id
+    }
+
+    localStorage.setItem(DRAFT_KEY, JSON.stringify({
+      ...form.values,
+      __draftId: activeDraftId.value,
+    }))
+    await fetchRequests()
     draftMessage.value = 'Draft saved to Drafts.'
+    await router.push('/dashboard')
   }
   catch (error) {
     draftMessage.value = ''
@@ -137,13 +150,15 @@ onMounted(() => {
 
   try {
     const draft = JSON.parse(raw) as Record<string, string>
-    const normalizedRole = ROLE_OPTIONS.includes(String(draft.role) as typeof ROLE_OPTIONS[number])
-      ? String(draft.role)
+    const { __draftId, ...draftValues } = draft
+    const normalizedRole = ROLE_OPTIONS.includes(String(draftValues.role) as typeof ROLE_OPTIONS[number])
+      ? String(draftValues.role)
       : ''
+    activeDraftId.value = String(__draftId || '')
     form.resetForm({
       values: {
         ...form.values,
-        ...draft,
+        ...draftValues,
         role: normalizedRole,
       },
     })
@@ -158,22 +173,27 @@ const onSubmit = form.handleSubmit(async (values) => {
   submitError.value = ''
   submitMessage.value = ''
   const ownerEmail = getActiveEmail() || values.contactEmail.toLowerCase()
+  const payload = {
+    ownerEmail,
+    requestTitle: values.requestTitle,
+    requester: values.fullName,
+    role: values.role,
+    companyName: values.companyName || '',
+    companyLocation: values.companyLocation || '',
+    companyType: values.companyType || '',
+    contactEmail: values.contactEmail,
+    contactPhone: values.contactPhone,
+    contactLinkedIn: values.contactLinkedIn || '',
+    website: values.website || '',
+    details: values.description,
+    status: 'pending' as const,
+  }
 
   try {
-    await createRequest({
-      ownerEmail,
-      requestTitle: values.requestTitle,
-      requester: values.fullName,
-      role: values.role,
-      companyName: values.companyName || '',
-      companyLocation: values.companyLocation || '',
-      companyType: values.companyType || '',
-      contactEmail: values.contactEmail,
-      contactPhone: values.contactPhone,
-      contactLinkedIn: values.contactLinkedIn || '',
-      website: values.website || '',
-      details: values.description,
-    })
+    if (activeDraftId.value)
+      await updateDraft(activeDraftId.value, payload)
+    else
+      await createRequest(payload)
 
     // Keep UI in sync across dashboard/admin by reloading the store
     await fetchRequests()
@@ -181,6 +201,7 @@ const onSubmit = form.handleSubmit(async (values) => {
     submitMessage.value = 'Request submitted successfully. It is now in the admin queue.'
     toast.success('Request has been created')
     draftMessage.value = ''
+    activeDraftId.value = ''
     localStorage.removeItem(DRAFT_KEY)
     form.resetForm()
     await router.push('/dashboard')

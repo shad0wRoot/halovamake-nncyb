@@ -16,6 +16,7 @@ import { computed, onMounted, ref, watch } from "vue"
 import { useRoute, useRouter } from "vue-router"
 import AppSidebar from "@/components/AdminSideBar.vue"
 import { getAuthUser } from "@/lib/authSession"
+import { getGravatarUrl } from "@/lib/gravatar"
 import { useAdminRequestsStore } from "@/stores/adminRequests"
 import { Badge } from "@/components/ui/badge"
 import {
@@ -245,16 +246,8 @@ function updateDecisionDraft(id: string, value: string) {
     decisionErrors.value[id] = ""
 }
 
-function initials(value: string) {
-  const cleaned = value.trim()
-  if (!cleaned)
-    return "RV"
-
-  const parts = cleaned.split(/\s+/).filter(Boolean)
-  if (parts.length === 1)
-    return (parts[0] ?? "").slice(0, 2).toUpperCase()
-
-  return `${parts[0]?.[0] ?? ""}${parts[1]?.[0] ?? ""}`.toUpperCase()
+function reviewerAvatar(email: string) {
+  return getGravatarUrl(email, 64)
 }
 
 const isAssignedToMe = computed(() => {
@@ -394,10 +387,14 @@ async function toggleAssignment() {
                   <button
                     v-if="activeReviewerDisplay"
                     type="button"
-                    class="bg-primary/10 text-primary inline-flex h-8 w-8 items-center justify-center rounded-full text-xs font-semibold"
+                    class="bg-primary/10 text-primary inline-flex h-8 w-8 items-center justify-center overflow-hidden rounded-full text-xs font-semibold"
                     :title="`${activeReviewerDisplay.name} (${activeReviewerDisplay.email})`"
                   >
-                    {{ initials(activeReviewerDisplay.name) }}
+                    <img
+                      :src="reviewerAvatar(activeReviewerDisplay.email)"
+                      :alt="activeReviewerDisplay.name"
+                      class="h-full w-full object-cover"
+                    >
                   </button>
                   <Button
                     variant="outline"
@@ -416,9 +413,9 @@ async function toggleAssignment() {
 
               <div class="border-border/60 mt-6 border-t pt-5">
                 <h3 class="text-sm font-semibold">Request Details</h3>
-                <p class="text-muted-foreground mt-2 text-sm leading-relaxed">
+                <div class="bg-background/50 border-border/60 text-muted-foreground mt-2 max-h-80 overflow-y-auto rounded-xl border p-4 text-sm leading-relaxed whitespace-pre-wrap break-words">
                   {{ selectedRequest.details }}
-                </p>
+                </div>
               </div>
 
               <div class="border-border/60 mt-6 border-t pt-5">
