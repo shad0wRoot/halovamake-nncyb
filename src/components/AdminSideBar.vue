@@ -34,7 +34,7 @@ const props = withDefaults(defineProps<SidebarProps>(), {
   collapsible: "icon",
 })
 
-type QueueState = "pending" | "appealed" | "approved" | "denied"
+type QueueState = "pending" | "appealed" | "approved" | "denied" | "draft"
 
 const data = {
   navMain: [
@@ -89,9 +89,10 @@ onMounted(async () => {
 
 const visibleRequests = computed(() => {
   let result = requests.value.filter((request) => {
-    if (activeItem.value.key === "queue")
+    const key = activeItem.value?.key
+    if (key === "queue")
       return request.status === "pending"
-    if (activeItem.value.key === "appeals")
+    if (key === "appeals")
       return request.status === "appealed"
     return request.status === "approved" || request.status === "denied"
   })
@@ -193,7 +194,7 @@ function priorityLabel(priorityScore: number) {
       <SidebarHeader class="gap-3.5 border-b p-4">
         <div class="flex w-full items-center justify-between">
           <div class="text-base font-medium text-foreground">
-            {{ activeItem.title }}
+            {{ activeItem?.title }}
           </div>
           <Label class="flex items-center gap-2 text-sm">
             <span>High Priority</span>

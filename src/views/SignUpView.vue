@@ -76,14 +76,16 @@ async function signup() {
     if (!token)
       throw new Error('Missing auth token after sign up.')
 
-    const userFromBody = (loginResponse.data as { user?: { email?: string, role?: string, roles?: string[] } }).user
+    const userFromBody = (loginResponse.data as { user?: { id?: string, email?: string, fullName?: string, role?: string, roles?: string[] } }).user
     if (!userFromBody?.email)
       throw new Error('Could not resolve signed up user profile.')
 
     const effectiveRole = userFromBody.role ?? (Array.isArray(userFromBody.roles) ? userFromBody.roles[0] : undefined)
 
     setAuthSession(token, {
+      id: userFromBody.id,
       email: userFromBody.email,
+      fullName: userFromBody.fullName,
       role: effectiveRole,
     })
     axios.defaults.headers.common.Authorization = `Bearer ${token}`
@@ -155,7 +157,7 @@ async function signup() {
               <Button type="submit" :disabled="isLoading">
                 Create Account
               </Button>
-              <p v-if="errorMessage" class="text-destructive mt-2 text-sm">
+              <p v-if="errorMessage" class="text-destructive text-center mt-2 text-sm">
                 {{ errorMessage }}
               </p>
               <FieldDescription class="text-center">

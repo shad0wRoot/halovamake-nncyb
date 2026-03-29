@@ -56,7 +56,7 @@ async function login() {
     if (!token)
       throw new Error('Missing auth token in login response.')
 
-    const userFromBody = (response.data as { user?: { email?: string, role?: string, roles?: string[] } }).user
+    const userFromBody = (response.data as { user?: { id?: string, email?: string, fullName?: string, role?: string, roles?: string[] } }).user
     let user = userFromBody ?? null
     if (!user?.email) {
       const meResponse = await axios.get('/api/auth/user', {
@@ -72,7 +72,9 @@ async function login() {
     const effectiveRole = user.role ?? (Array.isArray(user.roles) ? user.roles[0] : undefined)
 
     setAuthSession(token, {
+      id: user.id,
       email: user.email,
+      fullName: user.fullName,
       role: effectiveRole,
     })
     axios.defaults.headers.common.Authorization = `Bearer ${token}`
@@ -82,7 +84,7 @@ async function login() {
     else
       await router.push('/dashboard')
   } catch (error) {
-    errorMessage.value = error instanceof Error ? error.message : 'Login failed.'
+    errorMessage.value = 'Login failed.'
   } finally {
     isLoading.value = false;
   }
@@ -128,7 +130,7 @@ async function login() {
               <Button disabled v-else>
                 <Spinner></Spinner>
               </Button>
-              <p v-if="errorMessage" class="text-destructive mt-2 text-sm">
+              <p v-if="errorMessage" class="text-destructive text-center mt-2 text-sm">
                 {{ errorMessage }}
               </p>
               <FieldDescription class="text-center">

@@ -18,6 +18,11 @@ import requireEnv from "./utils/requireEnv";
 
 configDotenv();
 const app = express();
+app.set("etag", false); 
+app.use((req, res, next) => {
+  res.setHeader("Cache-Control", "no-store");   
+  next();
+});
 const MONGODB_URL: string = requireEnv("MONGODB_URL");
 requireEnv("JWT_SECRET");
 

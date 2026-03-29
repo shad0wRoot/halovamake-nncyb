@@ -59,7 +59,7 @@ router.post("/login", validate(loginSchema), (req, res, next) => {
             user: {
                id: user._id,
                email: user.email,
-               fullName: user.fullName,
+               name: user.fullName,
                roles: user.roles,
             },
          });

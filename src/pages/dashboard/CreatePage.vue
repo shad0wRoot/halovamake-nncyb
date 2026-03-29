@@ -25,6 +25,7 @@ import {
 import { Input } from '@/components/ui/input'
 import { getActiveEmail } from '@/lib/authSession'
 import { useAdminRequestsStore } from '@/stores/adminRequests'
+import router from '@/router'
 
 const optionalUrl = z.union([
   z.literal(''),
@@ -223,7 +224,7 @@ const onSubmit = form.handleSubmit(async (values) => {
                   <Badge variant="secondary">Required</Badge>
                 </div>
                 <FormControl>
-                  <Input type="text" placeholder="John Doe" v-bind="componentField" />
+                  <Input type="text" placeholder="Martin Kovacik" v-bind="componentField" />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -355,7 +356,7 @@ const onSubmit = form.handleSubmit(async (values) => {
 
         <div class="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
           <Button type="button" variant="outline" @click="saveDraft">Save Draft</Button>
-          <Button type="submit">Submit Request</Button>
+          <router-link to="/dashboard"><Button type="submit">Submit Request</Button></router-link>
         </div>
         <p v-if="draftMessage" class="text-sm text-muted-foreground">
           {{ draftMessage }}
